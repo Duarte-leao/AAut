@@ -5,11 +5,11 @@ from sklearn import linear_model as lm
 X = np.load('Xtrain_Regression1.npy')
 Y = np.load('Ytrain_Regression1.npy')
 
-Xtrain = X[:95,:]
-Ytrain = Y[:95,:]
+Xtrain = X[:80,:]
+Ytrain = Y[:80,:]
 
-Xval = X[95:,:]
-Yval = Y[95:,:]
+Xval = X[80:,:]
+Yval = Y[80:,:]
 
 reg = lm.LinearRegression()
 reg.fit(Xtrain,Ytrain)
