@@ -33,7 +33,24 @@ print(lin_reg_MSE)
 
 #### LARS Lasso (falta ver o alpha)####
 
-lin_reg_scores = cross_validate(linear_model.LassoLars(alpha=.001, normalize=False), X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score=True) 
-lin_reg_MSE = abs(lin_reg_scores['test_score'].mean())
+####lin_reg_scores = cross_validate(linear_model.LassoLars(alpha=.001, normalize=False), X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score=True) 
+####lin_reg_MSE = abs(lin_reg_scores['test_score'].mean())
 
-print(lin_reg_MSE)
+####print(lin_reg_MSE)
+
+# Generate array of alphas
+#lasso_alphas = []
+#alpha = 1
+
+#for i in range(200):
+#    alpha = alpha/1.05
+#    lasso_alphas.append(alpha)
+
+lassoLars_reg = linear_model.LassoLarsCV(cv = k).fit(X, np.ravel(Y))
+lassoLars_alpha = lassoLars_reg.alpha_ # Choose alpha that best fits the data
+
+lassoLars = linear_model.LassoLars(alpha = lassoLars_alpha)
+lassoLars_reg_scores = cross_validate(linear_model.LassoLars(alpha = lassoLars_alpha, normalize=True), X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
+lassoLars_reg_MSE = abs(lassoLars_reg_scores['test_score'].mean())
+
+print(lassoLars_reg_MSE)
