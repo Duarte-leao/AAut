@@ -7,8 +7,9 @@ Descrição: Regressão Parte 1
 """
 import numpy as np
 from sklearn import linear_model
-from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_validate
+from sklearn.pipeline import make_pipeline
+from sklearn import preprocessing
 from statistics import mean
 
 # Load the data set
@@ -83,13 +84,21 @@ elastic_net = linear_model.ElasticNet(alpha = lasso_alpha, l1_ratio = elastic_l1
 elastic_net_reg_scores = cross_validate(elastic_net, X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
 elastic_net_reg_MSE = abs(elastic_net_reg_scores['test_score'].mean())
 
+#### Least Angle Regression ####
+### PERGUNTAR A PROFESSORA SE É SUPOSTA NORMALIZAR O DATASET ANTES DE USAR LARS/LARSLASSO/OMP
+
+LARS_reg_scores = cross_validate(linear_model.Lars(normalize = False), X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
+LARS_reg_MSE = abs(LARS_reg_scores['test_score'].mean())
+print(LARS_reg_MSE)
+
+
 #### Selection of best estimator to do prediction ####
 
-predictors = [linear_model.LinearRegression(), linear_model.Ridge(alpha = ridge_alpha), linear_model.Lasso(alpha = lasso_alpha), linear_model.ElasticNet(alpha = lasso_alpha, l1_ratio = elastic_l1_ratio)]
-MSE_array = np.array([lin_reg_MSE, ridge_reg_MSE, lasso_reg_MSE, elastic_net_reg_MSE])
+predictors = [linear_model.LinearRegression(), linear_model.Ridge(alpha = ridge_alpha), linear_model.Lasso(alpha = lasso_alpha), linear_model.ElasticNet(alpha = lasso_alpha, l1_ratio = elastic_l1_ratio), linear_model.Lars(normalize=False)]
+MSE_array = np.array([lin_reg_MSE, ridge_reg_MSE, lasso_reg_MSE, elastic_net_reg_MSE, LARS_reg_MSE])
 min_MSE = np.argmin(MSE_array)
-print(MSE_array)
-print(min_MSE)
+# print(MSE_array)
+# print(min_MSE)
 
 predictor = predictors[min_MSE]
 
