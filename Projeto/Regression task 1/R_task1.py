@@ -58,13 +58,38 @@ lasso = linear_model.Lasso(alpha = lasso_alpha)
 lasso_reg_scores = cross_validate(linear_model.Lasso(alpha = lasso_alpha), X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
 lasso_reg_MSE = abs(lasso_reg_scores['test_score'].mean())
 
+#### Elastic-Net Regression ####
+
+# Generate array of alphas and l1-ratios
+elastic_alphas = []
+elastic_l1_ratios = []
+alpha = 1
+l1_ratio = 1
+for i in range(100):
+    alpha = alpha/1.05
+    elastic_alphas.append(alpha)
+    if i < 75:
+        l1_ratio = l1_ratio/1.007
+        elastic_l1_ratios.append(l1_ratio)
+    else:
+        l1_ratio = l1_ratio/1.4
+        elastic_l1_ratios.append(l1_ratio)
+
+elastic_reg = linear_model.ElasticNetCV(alphas = elastic_alphas,l1_ratio=elastic_l1_ratios, random_state = 0, cv = k).fit(X, np.ravel(Y))
+elastic_alpha = elastic_reg.alpha_ # Choose alpha that best fits the data
+elastic_l1_ratio = elastic_reg.l1_ratio_ # Choose l1-ratio that best fits the data
+
+elastic_net = linear_model.ElasticNet(alpha = lasso_alpha, l1_ratio = elastic_l1_ratio)
+elastic_net_reg_scores = cross_validate(elastic_net, X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
+elastic_net_reg_MSE = abs(elastic_net_reg_scores['test_score'].mean())
 
 #### Selection of best estimator to do prediction ####
 
-predictors = [linear_model.LinearRegression(), linear_model.Ridge(alpha = ridge_alpha), linear_model.Lasso(alpha = lasso_alpha)]
-MSE_array = np.array([lin_reg_MSE, ridge_reg_MSE, lasso_reg_MSE])
+predictors = [linear_model.LinearRegression(), linear_model.Ridge(alpha = ridge_alpha), linear_model.Lasso(alpha = lasso_alpha), linear_model.ElasticNet(alpha = lasso_alpha, l1_ratio = elastic_l1_ratio)]
+MSE_array = np.array([lin_reg_MSE, ridge_reg_MSE, lasso_reg_MSE, elastic_net_reg_MSE])
 min_MSE = np.argmin(MSE_array)
-# print(MSE_array)
+print(MSE_array)
+print(min_MSE)
 
 predictor = predictors[min_MSE]
 
