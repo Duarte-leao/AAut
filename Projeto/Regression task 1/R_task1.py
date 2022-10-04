@@ -18,7 +18,9 @@ X = np.load('Xtrain_Regression1.npy')
 Y = np.load('Ytrain_Regression1.npy')
 X_test = np.load('Xtest_Regression1.npy')
 
-
+"""
+Fazer normalização do data set
+"""
 # Testing multiple predictors with k-fold cross validation
 
 k = 10 # Number of splits in cross validation
