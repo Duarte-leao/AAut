@@ -89,7 +89,6 @@ elastic_net_reg_MSE = abs(elastic_net_reg_scores['test_score'].mean())
 
 #### Least Angle Regression ####
 Regressions_names.append('Least Angle Regression')
-### PERGUNTAR A PROFESSORA SE É SUPOSTA NORMALIZAR O DATASET ANTES DE USAR LARS/LARSLASSO/OMP
 
 LARS_reg_scores = cross_validate(linear_model.Lars(normalize = False), X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
 LARS_reg_MSE = abs(LARS_reg_scores['test_score'].mean())
