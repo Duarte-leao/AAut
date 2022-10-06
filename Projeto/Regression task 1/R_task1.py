@@ -8,19 +8,20 @@ Descrição: Regressão Parte 1
 import numpy as np
 from sklearn import linear_model
 from sklearn.model_selection import cross_validate
-from sklearn.pipeline import make_pipeline
 from sklearn import preprocessing
 from statistics import mean
 
 # Load the data set
-
 X = np.load('Xtrain_Regression1.npy')
 Y = np.load('Ytrain_Regression1.npy')
 X_test = np.load('Xtest_Regression1.npy')
 
-"""
-Fazer normalização do data set
-"""
+# Data normalization
+scaler = preprocessing.StandardScaler()
+scaler.fit(X)
+X = scaler.transform(X)
+X_test = scaler.transform(X_test)
+
 # Testing multiple predictors with k-fold cross validation
 
 k = 10 # Number of splits in cross validation
@@ -108,10 +109,10 @@ lassoLars_reg_MSE = abs(lassoLars_reg_scores['test_score'].mean())
 #### Orthogonal Matching Pursuit Regression ####
 Regressions_names.append('Orthogonal Matching Pursuit Regression')
 
-OMP_reg = linear_model.OrthogonalMatchingPursuitCV(cv = k, normalize=True, max_iter=10).fit(X, np.ravel(Y))
+OMP_reg = linear_model.OrthogonalMatchingPursuitCV(cv = k, normalize=False, max_iter=10).fit(X, np.ravel(Y))
 OMP_n_zero_coef = OMP_reg.n_nonzero_coefs_ # Choose number of non zero coefficients that best fits the data
 
-OMP_reg_scores = cross_validate(linear_model.OrthogonalMatchingPursuit(n_nonzero_coefs = OMP_n_zero_coef, normalize=True), X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
+OMP_reg_scores = cross_validate(linear_model.OrthogonalMatchingPursuit(n_nonzero_coefs = OMP_n_zero_coef, normalize=False), X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
 OMP_reg_MSE = abs(OMP_reg_scores['test_score'].mean())
 
 
