@@ -82,7 +82,6 @@ X_IQR = df_x_cleaned.to_numpy()
 Y_IQR = df_y_cleaned.to_numpy()
 
 ####################################### Outlier removal via 100-fold cross validation ###########################################
-
 k=100
 flag=1
 
