@@ -40,7 +40,7 @@ Regressions_names.append('Ridge Regression')
 ridge_alphas = []
 alpha = 1
 
-for i in range(200):
+for i in range(300):
     alpha = alpha/1.05
     ridge_alphas.append(alpha)
 
@@ -54,7 +54,7 @@ Regressions_names.append('Lasso Regression')
 lasso_alphas = []
 alpha = 1
 
-for i in range(200):
+for i in range(300):
     alpha = alpha/1.05
     lasso_alphas.append(alpha)
 
@@ -72,21 +72,19 @@ elastic_alphas = []
 elastic_l1_ratios = []
 alpha = 1
 l1_ratio = 1
-for i in range(100):
+for i in range(200):
     alpha = alpha/1.05
     elastic_alphas.append(alpha)
-    if i < 75:
-        l1_ratio = l1_ratio/1.007
-        elastic_l1_ratios.append(l1_ratio)
-    else:
-        l1_ratio = l1_ratio/1.4
-        elastic_l1_ratios.append(l1_ratio)
+    l1_ratio = l1_ratio/1.05
+    elastic_l1_ratios.append(l1_ratio)
+
 
 elastic_reg = linear_model.ElasticNetCV(alphas = elastic_alphas,l1_ratio=elastic_l1_ratios, random_state = 0, cv = k).fit(X, np.ravel(Y))
 elastic_alpha = elastic_reg.alpha_ # Choose alpha that best fits the data
 elastic_l1_ratio = elastic_reg.l1_ratio_ # Choose l1-ratio that best fits the data
 
-elastic_net = linear_model.ElasticNet(alpha = lasso_alpha, l1_ratio = elastic_l1_ratio)
+
+elastic_net = linear_model.ElasticNet(alpha = elastic_alpha, l1_ratio = elastic_l1_ratio)
 elastic_net_reg_scores = cross_validate(elastic_net, X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
 elastic_net_reg_MSE = abs(elastic_net_reg_scores['test_score'].mean())
 
