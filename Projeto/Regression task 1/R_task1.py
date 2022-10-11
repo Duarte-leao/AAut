@@ -40,7 +40,7 @@ Regressions_names.append('Ridge Regression')
 ridge_alphas = []
 alpha = 1
 
-for i in range(300):
+for i in range(200):
     alpha = alpha/1.05
     ridge_alphas.append(alpha)
 
@@ -54,7 +54,7 @@ Regressions_names.append('Lasso Regression')
 lasso_alphas = []
 alpha = 1
 
-for i in range(300):
+for i in range(200):
     alpha = alpha/1.05
     lasso_alphas.append(alpha)
 
