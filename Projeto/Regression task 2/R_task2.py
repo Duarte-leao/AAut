@@ -23,6 +23,73 @@ import matplotlib.pyplot as plt
 X = np.load('Xtrain_Regression2.npy')
 Y = np.load('Ytrain_Regression2.npy')
 X_test = np.load('Xtest_Regression2.npy')
+Regressions_names = []
+Predictors = []
+MSE_array = np.array([])
+
+###################################################### Robust regressors to outliers ######################################################
+def Robust_regressors(X,Y,Regressions_names,MSE_array,Predictors):
+    # Data normalization
+    scaler = preprocessing.StandardScaler()
+    scaler.fit(X)
+    X = scaler.transform(X)
+    
+
+    # Testing multiple predictors with k-fold cross validation
+
+    k = 10 # Number of splits in cross validation
+
+    ##### KNN Regressor #####
+
+    KNN_reg = neighbors.KNeighborsRegressor(n_neighbors=35,weights='distance',algorithm='brute')
+    KNN_reg_scores = cross_validate(KNN_reg, X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
+    KNN_reg_MSE = abs(KNN_reg_scores['test_score'])
+    print('KNN MSE:', KNN_reg_MSE.mean())
+    Regressions_names.append('KNN Regressor')
+    Predictors.append(KNN_reg)
+    MSE_array = np.append(MSE_array,KNN_reg_MSE)
+
+    ##### Huber Regressor #####
+
+    Huber_reg = linear_model.HuberRegressor(max_iter=500, epsilon=20)
+    Huber_reg_scores = cross_validate(Huber_reg, X, np.ravel(Y), cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
+    Huber_reg_MSE = abs(Huber_reg_scores['test_score'].mean())
+    print('Huber Regressor MSE:', Huber_reg_MSE)
+    Regressions_names.append('Huber Regressor')
+    Predictors.append(Huber_reg)
+    MSE_array = np.append(MSE_array,Huber_reg_MSE)
+
+    ##### RANSAC Regressor #####
+
+    RANSAC_reg = linear_model.RANSACRegressor(min_samples=20,residual_threshold=1,loss='squared_error')
+    RANSAC_reg_scores = cross_validate(RANSAC_reg, X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
+    RANSAC_reg_MSE = abs(RANSAC_reg_scores['test_score'].mean())
+    print('RANSAC Regressor MSE:', RANSAC_reg_MSE)
+    Regressions_names.append('RANSAC Regressor')
+    Predictors.append(RANSAC_reg)
+    MSE_array = np.append(MSE_array,RANSAC_reg_MSE)
+
+    ##### TheilSen Regressor #####
+
+    TheilSen_reg = linear_model.TheilSenRegressor(n_subsamples=20)
+    TheilSen_reg_scores = cross_validate(TheilSen_reg, X, np.ravel(Y), cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
+    TheilSen_reg_MSE = abs(TheilSen_reg_scores['test_score'].mean())
+    print('TheilSen Regressor MSE:', TheilSen_reg_MSE)
+    Regressions_names.append('TheilSen Regressor')
+    Predictors.append(TheilSen_reg)
+    MSE_array = np.append(MSE_array,TheilSen_reg_MSE)
+
+    # ##### Random Forest Regressor #####
+
+    RdmFor_reg = ensemble.RandomForestRegressor()
+    RdmFor_reg_scores = cross_validate(RdmFor_reg, X, np.ravel(Y), cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
+    RdmFor_reg_MSE = abs(RdmFor_reg_scores['test_score'].mean())
+    print('Random Forest MSE:', RdmFor_reg_MSE)
+    Regressions_names.append('Random Forest Regressor')
+    Predictors.append(RdmFor_reg)
+    MSE_array = np.append(MSE_array,RdmFor_reg_MSE)
+
+    return Regressions_names, Predictors, MSE_array
 
 ###################################################### Outlier removal ######################################################
 ##### IQR #####
@@ -169,49 +236,5 @@ def Iso_Forest(X, Y):
 
 # X, Y = Iso_Forest(X,Y)
 
-###################################################### Robust regressors to outliers ######################################################
-def Robust_regressors(X,Y):
-    # Data normalization
-    scaler = preprocessing.StandardScaler()
-    scaler.fit(X)
-    X = scaler.transform(X)
-    
 
-    # Testing multiple predictors with k-fold cross validation
 
-    k = 10 # Number of splits in cross validation
-
-    ##### KNN Regressor #####
-
-    KNN_reg = neighbors.KNeighborsRegressor(n_neighbors=35,weights='distance',algorithm='brute')
-    KNN_reg_scores = cross_validate(KNN_reg, X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
-    KNN_reg_MSE = abs(KNN_reg_scores['test_score'])
-    print('KNN MSE:', KNN_reg_MSE.mean())
-
-    ##### Huber Regressor #####
-
-    Huber_reg = linear_model.HuberRegressor(max_iter=500, epsilon=20)
-    Huber_reg_scores = cross_validate(Huber_reg, X, np.ravel(Y), cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
-    Huber_reg_MSE = abs(Huber_reg_scores['test_score'].mean())
-    print('Huber Regressor MSE:', Huber_reg_MSE)
-
-    ##### RANSACRegressor #####
-
-    RANSAC_reg = linear_model.RANSACRegressor(min_samples=20,residual_threshold=1,loss='squared_error')
-    RANSAC_reg_scores = cross_validate(RANSAC_reg, X, Y, cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
-    RANSAC_reg_MSE = abs(RANSAC_reg_scores['test_score'].mean())
-    print('RANSAC Regressor MSE:', RANSAC_reg_MSE)
-
-    ##### TheilSen Regressor #####
-
-    TheilSen_reg = linear_model.TheilSenRegressor(n_subsamples=20)
-    TheilSen_reg_scores = cross_validate(TheilSen_reg, X, np.ravel(Y), cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
-    TheilSen_reg_MSE = abs(TheilSen_reg_scores['test_score'].mean())
-    print('TheilSen Regressor MSE:', TheilSen_reg_MSE)
-
-    # ##### Random Forest Regressor #####
-
-    RdmFor_reg = ensemble.RandomForestRegressor()
-    RdmFor_reg_scores = cross_validate(RdmFor_reg, X, np.ravel(Y), cv = k, scoring = 'neg_mean_squared_error', return_train_score = True)
-    RdmFor_reg_MSE = abs(RdmFor_reg_scores['test_score'].mean())
-    print('Random Forest MSE:', RdmFor_reg_MSE)
