@@ -24,7 +24,7 @@ X_test = scaler.transform(X_test)
 
 # Testing multiple predictors with k-fold cross validation
 
-k = 10 # Number of splits in cross validation
+k = 20 # Number of splits in cross validation
 
 
 Regressions_names = []
