@@ -8,7 +8,7 @@ Descrição: Classificação Parte 1
 
 import keras.backend as K
 import tensorflow as tf
-import tensorflow_addons as tfa
+from sklearn.metrics import balanced_accuracy_score as BACC
 from tensorflow.keras import layers
 from tensorflow import keras
 from sklearn.model_selection import GridSearchCV
@@ -24,6 +24,7 @@ from imblearn.keras import BalancedBatchGenerator
 from imblearn.keras import balanced_batch_generator
 from imblearn.over_sampling import RandomOverSampler
 from imblearn.under_sampling import NearMiss
+from sklearn.utils import class_weight
 
 
 def f1_score(y_true, y_pred): 
@@ -82,7 +83,7 @@ def Plots(model_train):
 
 X = np.load('Xtrain_Classification1.npy')
 Y = np.load('ytrain_Classification1.npy')
-# X_test = np.load('Xtest_Regression1.npy')
+# X_test = np.load('Xtest_Classification1.npy')
 
 # print(np.count_nonzero(Y==0))
 # print(np.count_nonzero(Y==1))
@@ -90,35 +91,20 @@ Y = np.load('ytrain_Classification1.npy')
 # plt.imshow(train_set[500])
 # plt.show()
 #### SPLIT DATA   ####
-# Xtrain, Xtest, ytrain, ytest = train_test_split(X,Y, test_size=0.20,random_state=2)
-
-# Xtrain, Xval, ytrain, yval = train_test_split(Xtrain,ytrain, test_size=0.10,random_state=2)
-
-# Xtrain, Xtest, ytrain, ytest = train_test_split(X,Y, test_size=0.20, shuffle=True)
 
 Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.20, random_state=2)
-# Xtrain, Xval, ytrain, yval = train_test_split(Xtrain,ytrain, test_size=0.10, shuffle=True)
+# Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.10, shuffle=True)
 
 ####  NORMALIZE DATA   ####
 
 Xtrain = Xtrain/255
 Xval = Xval/255
-# Xtest = Xtest/255
+
 
 # #One-hot enconding
 train_labels = keras.utils.to_categorical(ytrain, num_classes=2)
 valid_labels = keras.utils.to_categorical(yval, num_classes=2)
-# test_labels = keras.utils.to_categorical(ytest, num_classes=2)
-# print(test_labels)
-# print(ytest)
 
-# training_generator = BalancedBatchGenerator(
-#     Xtrain, train_labels, sampler=RandomOverSampler(), batch_size=1, random_state=42)
-
-# training_generator = balanced_batch_generator(
-#     Xtrain, train_labels, sampler=RandomOverSampler(), batch_size=1, random_state=42)
-
-# print((training_generator[0]))
 
 
 def data_balance_generator(Xtrain, train_labels):
@@ -128,14 +114,11 @@ def data_balance_generator(Xtrain, train_labels):
     Xtrain = Xtrain.reshape(-1, 2700)
     training_generator = balanced_batch_generator(
         Xtrain, train_labels, sampler=RandomOverSampler(sampling_strategy=1), batch_size=1)
-    # training_generator = balanced_batch_generator(
-    #     Xtrain, train_labels, batch_size=1)
+
 
     Xtrain = []
     train_labels = []
     for i, el in enumerate(training_generator[0]): 
-        # print(i, el)
-        # print(el[0])
         Xtrain.append(el[0])
         train_labels.append(el[1])
         if i == training_generator[1]:
@@ -156,9 +139,9 @@ def data_balance_generator(Xtrain, train_labels):
 #Reshape
 Xtrain = Xtrain.reshape(-1, 30, 30, 3)
 Xval = Xval.reshape(-1, 30, 30, 3)
-# Xtest = Xtest.reshape(-1, 30, 30, 3)
 
-# print(Xtrain)
+
+
 ########    CNN     #######
 
 
@@ -191,16 +174,20 @@ Xval = Xval.reshape(-1, 30, 30, 3)
 
 #### Modelo 2 ####
 
+def class_weights(y_train):
+    cls_wt = class_weight.compute_class_weight('balanced', classes = np.unique(y_train), y = y_train)
 
+    class_weights = {0: cls_wt[0], 1:cls_wt[1]}
+    return class_weights
 
 
 
 def data_augment(Xtrain):
     data_augmentation = tf.keras.Sequential([
-        layers.RandomFlip("horizontal_and_vertical"),
+        layers.RandomFlip("horizontal"),
         # layers.RandomFlip("horizontal_and_vertical", input_shape=(30,30,3)),
-        layers.RandomRotation(0.2),
-        layers.RandomZoom(0.1)
+        layers.RandomRotation(0.2, fill_mode='nearest'),
+        # layers.RandomZoom(0.1)
         ])
 
     # plt.figure()
@@ -223,35 +210,68 @@ def data_augment(Xtrain):
 # Xtrain = data_augment(Xtrain)
 # Xtrain, train_labels = data_balance_generator(Xtrain, train_labels)
 # Xtrain = data_augment(Xtrain)
-def CNN(Xtrain, train_labels, Xval, valid_labels):
-    cnn_model1 = keras.Sequential()
-    # cnn_model1.add(data_augmentation)
-    cnn_model1.add(keras.layers.Conv2D(16, (3, 3),1, activation='relu', input_shape=(30, 30, 3)))
-    cnn_model1.add(keras.layers.MaxPooling2D((2, 2)))
-    cnn_model1.add(keras.layers.Conv2D(32, (3, 3),1, activation='relu'))
-    cnn_model1.add(keras.layers.MaxPooling2D((2, 2)))
-    cnn_model1.add(keras.layers.Conv2D(64, (3, 3),1, activation='relu'))
-    cnn_model1.add(keras.layers.MaxPooling2D((2, 2)))
-    # cnn_model1.add(layers.Dropout(0.2))
+def CNN(Xtrain, train_labels, Xval, valid_labels, class_weights = None):
+    # cnn_model1 = keras.Sequential()
+    # cnn_model1.add(keras.layers.Conv2D(16, (3, 3),1, activation='relu', input_shape=(30, 30, 3)))
+    # cnn_model1.add(keras.layers.MaxPooling2D((2, 2)))
+    # cnn_model1.add(keras.layers.Conv2D(32, (3, 3),1, activation='relu'))
+    # cnn_model1.add(keras.layers.MaxPooling2D((2, 2)))
+    # cnn_model1.add(keras.layers.Conv2D(64, (3, 3),1, activation='relu'))
+    # cnn_model1.add(keras.layers.MaxPooling2D((2, 2)))
+    # cnn_model1.add(keras.layers.Flatten())
+    # cnn_model1.add(keras.layers.Dense(128, activation='relu'))
+    # cnn_model1.add(keras.layers.Dense(2,activation='softmax'))
 
-    cnn_model1.add(keras.layers.Flatten())
-    cnn_model1.add(keras.layers.Dense(128, activation='relu'))
-    cnn_model1.add(keras.layers.Dense(2,activation='softmax'))
-    # cnn_model1.add(keras.layers.Dense(1,activation='softmax'))
 
-    my_callbacks = [keras.callbacks.EarlyStopping(monitor = 'val_loss', patience=5, restore_best_weights=True)]
+    # my_callbacks = [keras.callbacks.EarlyStopping(monitor = 'val_loss', patience=5, restore_best_weights=True)]
+    # cnn_model1.compile(optimizer="adam", loss='categorical_crossentropy', metrics = f1_score)
+
+
+    # cnn1_train = cnn_model1.fit(Xtrain, train_labels,validation_data=(Xval, valid_labels),class_weight=class_weights, epochs= 30,batch_size=200, callbacks= my_callbacks)
+
+    # # cnn1_train = cnn_model1.fit(train_dataset,validation_data=(Xval, valid_labels), epochs= 30,batch_size=200, callbacks= my_callbacks)
+
+    # test_eval = cnn_model1.evaluate(Xval, valid_labels, verbose=1)
+#     cnn_model1 = keras.Sequential([
+#     keras.layers.Conv2D(16, kernel_size=(3, 3), activation='relu',padding='same',input_shape=(30, 30, 3)),
+#     keras.layers.Conv2D(16, kernel_size=(3, 3), activation='relu',padding='same'),
+#     keras.layers.MaxPooling2D(pool_size=(2, 2),strides=2),
+#     keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu'),
+#     keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu'),
+#     keras.layers.MaxPooling2D(pool_size=(2, 2),strides=2),
+#     keras.layers.Flatten(),
+#     keras.layers.Dense(256, activation='relu'),
+#     keras.layers.Dense(2, activation='softmax')
+# ])
+
+    cnn_model1 = keras.Sequential([
+    keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu',padding='same',input_shape=(30, 30, 3)),
+    keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu',padding='same'),
+    keras.layers.MaxPooling2D(pool_size=(2, 2),strides=2),
+    keras.layers.Dropout(0.2),
+    keras.layers.Conv2D(64, kernel_size=(3, 3), activation='relu'),
+    keras.layers.Conv2D(64, kernel_size=(3, 3), activation='relu'),
+    keras.layers.BatchNormalization(),
+    keras.layers.MaxPooling2D(pool_size=(2, 2),strides=2),
+    keras.layers.Dropout(0.3),
+    keras.layers.Flatten(),
+    keras.layers.Dense(256, activation='relu'),
+    keras.layers.BatchNormalization(),
+    keras.layers.Dropout(0.7),
+    keras.layers.Dense(2, activation='softmax')
+])
+
+
+    my_callbacks = [keras.callbacks.EarlyStopping(monitor = 'val_loss', patience=10, restore_best_weights=True)]
     cnn_model1.compile(optimizer="adam", loss='categorical_crossentropy', metrics = f1_score)
-    # cnn_model1.compile(optimizer="adam", loss='binary_crossentropy', metrics = f1_score)
 
-    cnn1_train = cnn_model1.fit(Xtrain, train_labels,validation_data=(Xval, valid_labels), epochs= 30,batch_size=200, callbacks= my_callbacks)
-    # cnn1_train = cnn_model1.fit(Xtrain, ytrain,validation_data=(Xval, yval), epochs= 30,batch_size=200, callbacks= my_callbacks)
+
+    cnn1_train = cnn_model1.fit(Xtrain, train_labels,validation_data=(Xval, valid_labels),class_weight=class_weights, epochs= 50,batch_size=200, callbacks= my_callbacks)
 
     # cnn1_train = cnn_model1.fit(train_dataset,validation_data=(Xval, valid_labels), epochs= 30,batch_size=200, callbacks= my_callbacks)
 
     test_eval = cnn_model1.evaluate(Xval, valid_labels, verbose=1)
-    # test_eval = cnn_model1.evaluate(Xval, yval, verbose=1)
 
-    # test_eval = cnn_model1.evaluate(Xtest, test_labels, verbose=1)
     return cnn_model1
 
 
@@ -271,51 +291,103 @@ def CNN(Xtrain, train_labels, Xval, valid_labels):
 def model_evaluation(cnn_model, X, y):
     pred_labels = cnn_model.predict(X)
     
-    # pred_y=traduz_vec(pred_labels)
 
     print(met.f1_score(y,traduz_vec(pred_labels)))
     print(met.confusion_matrix(y,traduz_vec(pred_labels)))
-    # print(met.f1_score(y,pred_labels))
 
-    # print(f1_score(y.reshape(-1,1).astype('float32'),pred_labels))
-    # print(pred_labels)
-    # print(valid_labels)
-    print(f1_score(valid_labels,pred_labels))
+
+
+    # print(f1_score(valid_labels,pred_labels))
 
     return met.f1_score(y,traduz_vec(pred_labels))
 
-l = 36
+def bacc(cnn_model, X, y_real):
+    y_pred = traduz_vec(cnn_model.predict(X))
+    bacc = BACC(y_real, y_pred)
+    return bacc
+
+l = 150
 a = []
 b = []
 c = []
 d = []
+e = []
+a1 = []
+b1 = []
+c1 = []
+d1 = []
+e1 = []
+
 for i in range(l):
     print(i)
-    if i<l/4: # With data augmentation
-        cnn_model = CNN(data_augment(Xtrain), train_labels, Xval, valid_labels)
-        a.append(model_evaluation(cnn_model, Xval, yval))
-    elif l/4-1<i<2*l/4: # With balanced data
+    if i<l/5: # With data augmentation
+        pass
+        # cnn_model = CNN(data_augment(Xtrain), train_labels, Xval, valid_labels)
+        # a.append(model_evaluation(cnn_model, Xval, yval))
+        # a1.append(bacc(cnn_model, Xval, yval))
+    elif l/5-1<i<2*l/5: # With balanced data
         aux_X, aux_y = data_balance_generator(Xtrain, train_labels)
         cnn_model = CNN(aux_X, aux_y, Xval, valid_labels)
         b.append(model_evaluation(cnn_model, Xval, yval))
-    elif 2*l/4-1<i<3*l/4: # with original data set
+        b1.append(bacc(cnn_model, Xval, yval))
+    elif 2*l/5-1<i<3*l/5: # with original data set
         cnn_model = CNN(Xtrain, train_labels, Xval, valid_labels)
         c.append(model_evaluation(cnn_model, Xval, yval))
-    elif 3*l/4-1<i<l: # With data augmentation and balanced data set
-        aux_X, aux_y = data_balance_generator(Xtrain, train_labels)
-        cnn_model = CNN(data_augment(aux_X), aux_y, Xval, valid_labels)
-        d.append(model_evaluation(cnn_model, Xval, yval))
-    # elif 3*l/4-1<i<l: # With data augmentation and balanced data set
-    #     aux_X, aux_y = data_balance_generator(Xtrain, train_labels)
-    #     cnn_model = CNN(data_augment(aux_X), aux_y, Xval, valid_labels)
-    #     d.append(model_evaluation(cnn_model, Xval, valid_labels))
-
-
-print(np.std(a), np.mean(a))
-print(np.std(b), np.mean(b))
-print(np.std(c), np.mean(c))
-print(np.std(d), np.mean(d))
+        c1.append(bacc(cnn_model, Xval, yval))
+    elif 3*l/5-1<i<4*l/5: # With data augmentation and balanced data set
+        pass
+        # aux_X, aux_y = data_balance_generator(Xtrain, train_labels)
+        # cnn_model = CNN(data_augment(aux_X), aux_y, Xval, valid_labels)
+        # d.append(model_evaluation(cnn_model, Xval, yval))
+        # d1.append(bacc(cnn_model, Xval, yval))
+    elif 4*l/5-1<i<l: # With re-weighting of classes
+        cnn_model = CNN(Xtrain, train_labels, Xval, valid_labels, class_weights= class_weights(ytrain))
+        e.append(model_evaluation(cnn_model, Xval, yval))
+        e1.append(bacc(cnn_model, Xval, yval))
 
 
 
 
+# print('f1 std:',np.std(a), 'f1 mean:',np.mean(a), 'bacc std:',np.std(a1), 'bacc mean:',np.mean(a1))
+print('f1 std:',np.std(b), 'f1 mean:',np.mean(b), 'bacc std:',np.std(b1), 'bacc mean:',np.mean(b1),'max f1:', np.max(b),'min f1:', np.min(b))
+print('f1 std:',np.std(c), 'f1 mean:',np.mean(c), 'bacc std:',np.std(c1), 'bacc mean:',np.mean(c1),'max f1:', np.max(c),'min f1:', np.min(c))
+# print('f1 std:',np.std(d), 'f1 mean:',np.mean(d), 'bacc std:',np.std(d1), 'bacc mean:',np.mean(d1))
+print('f1 std:',np.std(e), 'f1 mean:',np.mean(e), 'bacc std:',np.std(e1), 'bacc mean:',np.mean(e1),'max f1:', np.max(e),'min f1:', np.min(e))
+# plt.figure()
+# plt.boxplot(a)
+# plt.figure()
+# plt.boxplot(b)
+# plt.figure()
+# plt.boxplot(c)
+# plt.figure()
+# plt.boxplot(d)
+# plt.figure()
+# plt.boxplot(e)
+# plt.show()
+
+# 0.014810402870845648 0.752717305862203
+# 0.010054676105688885 0.7863161712506432
+# 0.0296444116535936 0.7803158358300042
+# 0.012347847235487494 0.760021928518897
+# 0.010845099912714089 0.7826304746877601
+
+# 0.008567417224620033 0.7985125292654413
+# 0.006124870971163109 0.7986370070354757
+# 0.010937996003127866 0.8040081214211098
+# 0.010986082794055175 0.7973686688319737
+# 0.007121930135348871 0.8038244610726724
+
+
+### 20 iterations ###
+
+# f1 std: 0.01042932479513175 f1 mean: 0.8057264968840661 bacc std: 0.008598896938537928 bacc mean: 0.8425141792618411 # data augmentation
+# f1 std: 0.008927955038856274 f1 mean: 0.8028322540668462 bacc std: 0.007309293566566375 bacc mean: 0.8408155362536359 # balanced data
+# f1 std: 0.007801911070372407 f1 mean: 0.8046285695980686 bacc std: 0.00603277575898918 bacc mean: 0.8417473052425283 # original data set
+# f1 std: 0.009922040979015273 f1 mean: 0.8020404158706482 bacc std: 0.008447145943603306 bacc mean: 0.8400539339117709 # data augmentation and balanced data set
+# f1 std: 0.007474735482207277 f1 mean: 0.8022291009461915 bacc std: 0.006084409747117845 bacc mean: 0.8407527025099386 # re-weighed data
+
+### 30 iterations ###
+
+# f1 std: 0.00966996612830268 f1 mean: 0.8022678465789693 bacc std: 0.007999945944957315 bacc mean: 0.8402188159605719 max f1: 0.8213991769547324 min f1: 0.7814029363784666# balanced data
+# f1 std: 0.00827838193453924 f1 mean: 0.8045154805829963 bacc std: 0.0068608114661904045 bacc mean: 0.8413744761916574 max f1: 0.8196202531645569 min f1: 0.7791563275434243 # original data set
+# f1 std: 0.010274636787714847 f1 mean: 0.8015368364139019 bacc std: 0.008487780318032446 bacc mean: 0.8396714401189126 max f1: 0.8296178343949044 min f1: 0.7846808510638298 # re-weighed data
