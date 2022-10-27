@@ -341,7 +341,7 @@ while np.max(scores) < 0.81:
     #Reshape
     Xtrain_cnn = Xtrain.reshape(-1, 30, 30, 3)
     Xval_cnn = Xval.reshape(-1, 30, 30, 3)
-
+ 
     # choose_dataset(2)
 
     # Auxiliar lists
