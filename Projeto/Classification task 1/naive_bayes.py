@@ -1,4 +1,4 @@
-
+from sklearn.naive_bayes import GaussianNB
 import keras.backend as K
 import tensorflow as tf
 from sklearn.metrics import balanced_accuracy_score as BACC
@@ -18,14 +18,16 @@ from imblearn.keras import balanced_batch_generator
 from imblearn.over_sampling import RandomOverSampler
 from imblearn.under_sampling import NearMiss
 from sklearn.utils import class_weight
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 X = np.load('Xtrain_Classification1.npy')
 Y = np.load('ytrain_Classification1.npy')
 
-Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.20, random_state=2)
+Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.20)
 
-Xtrain = Xtrain/255
-Xval = Xval/255
+# Xtrain = Xtrain/255
+# Xval = Xval/255
 
 train_labels = keras.utils.to_categorical(ytrain, num_classes=2)
 
@@ -77,14 +79,47 @@ def data_balance_generator(Xtrain, train_labels, CNN = True):
     # plt.show()
     return Xtrain, train_labels
 
-gnb = GaussianNB()
-Xtrain_not_CNN, ytrain_not_CNN = data_balance_generator(Xtrain, train_labels, False)
-print(np.shape(Xtrain))
-print(np.shape(Xtrain_not_CNN))
-pred_y = gnb.fit(Xtrain_not_CNN,ytrain_not_CNN).predict(Xval)
-pred_y2 = gnb.fit(Xtrain,ytrain).predict(Xval)
+def class_weights(y_train):
+    cls_wt = class_weight.compute_class_weight('balanced', classes = np.unique(y_train), y = y_train)
 
-print(met.confusion_matrix(yval,pred_y))
+    class_weights = {0: cls_wt[0], 1:cls_wt[1]}
+    return class_weights
+# gnb = GaussianNB()
+Xtrain_not_CNN, ytrain_not_CNN = data_balance_generator(Xtrain, train_labels, False)
+# f1 = 0
+# k = 0
+# for i in range(2,100):
+#     gnb = KNeighborsClassifier(n_neighbors=i, weights= 'distance')
+
+
+#     # print(np.shape(Xtrain))
+#     # print(np.shape(Xtrain_not_CNN))
+#     pred_y = gnb.fit(Xtrain_not_CNN,ytrain_not_CNN).predict(Xval)
+#     # pred_y2 = gnb.fit(Xtrain,ytrain).predict(Xval)
+
+#     # print(met.confusion_matrix(yval,pred_y))
+#     print(i)
+#     if f1<met.f1_score(yval,pred_y):
+#         f1 = met.f1_score(yval,pred_y)
+#         k = i
+# # print(met.f1_score(yval,pred_y2))
+
+# print(k)
+# gnb = KNeighborsClassifier(n_neighbors=51, weights= 'distance')
+
+# # 92
+# # 51
+# pred_y = gnb.fit(Xtrain_not_CNN,ytrain_not_CNN).predict(Xval)
+# print(met.f1_score(yval,pred_y))
+
+gnb = DecisionTreeClassifier()
+
+
+pred_y = gnb.fit(Xtrain_not_CNN,ytrain_not_CNN).predict(Xval)
+
+gnb2 = DecisionTreeClassifier(class_weight = class_weights(ytrain))
+
+pred_y2 = gnb2.fit(Xtrain,ytrain).predict(Xval)
+
 print(met.f1_score(yval,pred_y))
 print(met.f1_score(yval,pred_y2))
-
