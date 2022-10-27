@@ -12,19 +12,14 @@ from sklearn.metrics import balanced_accuracy_score as BACC
 from tensorflow.keras import layers
 from tensorflow import keras
 from sklearn.model_selection import GridSearchCV
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier
 import sklearn.metrics as met
-from imblearn.pipeline import Pipeline as imbpipeline
-from imblearn.keras import BalancedBatchGenerator
 from imblearn.keras import balanced_batch_generator
 from imblearn.over_sampling import RandomOverSampler
-from imblearn.under_sampling import NearMiss
 from sklearn.utils import class_weight
+from sklearn.naive_bayes import GaussianNB
 
 
 def f1_score(y_true, y_pred): 
@@ -35,14 +30,6 @@ def f1_score(y_true, y_pred):
     recall = true_positives / (possible_positives)
     f1_val = 2*(precision*recall)/(precision+recall)
 
-    
-    # true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    # # print(true_positives)
-    # possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-    # predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-    # precision = true_positives / (predicted_positives + K.epsilon())
-    # recall = true_positives / (possible_positives + K.epsilon())
-    # f1_val = 2*(precision*recall)/(precision+recall+K.epsilon())
     return f1_val
 
 def traduz_vec(prob_vec):
@@ -101,13 +88,16 @@ Xtrain = Xtrain/255
 Xval = Xval/255
 
 
-# #One-hot enconding
+#One-hot enconding
 train_labels = keras.utils.to_categorical(ytrain, num_classes=2)
 valid_labels = keras.utils.to_categorical(yval, num_classes=2)
 
+#Reshape
+Xtrain_cnn = Xtrain.reshape(-1, 30, 30, 3)
+Xval_cnn = Xval.reshape(-1, 30, 30, 3)
 
 
-def data_balance_generator(Xtrain, train_labels):
+def data_balance_generator(Xtrain, train_labels, CNN = True):
     # plt.figure()
     # plt.imshow(Xtrain[500])
 
@@ -125,7 +115,10 @@ def data_balance_generator(Xtrain, train_labels):
             break
     Xtrain = np.vstack(Xtrain)
     train_labels = np.vstack(train_labels)
-    Xtrain = Xtrain.reshape(-1, 30, 30, 3)
+    if CNN: 
+        Xtrain = Xtrain.reshape(-1, 30, 30, 3)
+    else:
+        train_labels = traduz_vec(train_labels)
 
     # plt.figure()
     # plt.imshow(Xtrain[500])
@@ -136,9 +129,7 @@ def data_balance_generator(Xtrain, train_labels):
 # print(np.count_nonzero(train_labels ==  [0., 1.]))
 # print(np.count_nonzero(train_labels !=  [0., 1.]))
 
-#Reshape
-Xtrain = Xtrain.reshape(-1, 30, 30, 3)
-Xval = Xval.reshape(-1, 30, 30, 3)
+
 
 
 
@@ -183,6 +174,8 @@ def class_weights(y_train):
 
 
 def data_augment(Xtrain):
+
+
     data_augmentation = tf.keras.Sequential([
         layers.RandomFlip("horizontal"),
         # layers.RandomFlip("horizontal_and_vertical", input_shape=(30,30,3)),
@@ -210,29 +203,35 @@ def data_augment(Xtrain):
 # Xtrain = data_augment(Xtrain)
 # Xtrain, train_labels = data_balance_generator(Xtrain, train_labels)
 # Xtrain = data_augment(Xtrain)
-def CNN(Xtrain, train_labels, Xval, valid_labels, class_weights = None):
-    # cnn_model1 = keras.Sequential()
-    # cnn_model1.add(keras.layers.Conv2D(16, (3, 3),1, activation='relu', input_shape=(30, 30, 3)))
-    # cnn_model1.add(keras.layers.MaxPooling2D((2, 2)))
-    # cnn_model1.add(keras.layers.Conv2D(32, (3, 3),1, activation='relu'))
-    # cnn_model1.add(keras.layers.MaxPooling2D((2, 2)))
-    # cnn_model1.add(keras.layers.Conv2D(64, (3, 3),1, activation='relu'))
-    # cnn_model1.add(keras.layers.MaxPooling2D((2, 2)))
-    # cnn_model1.add(keras.layers.Flatten())
-    # cnn_model1.add(keras.layers.Dense(128, activation='relu'))
-    # cnn_model1.add(keras.layers.Dense(2,activation='softmax'))
+def CNN(Xtrain, train_labels, Xval, valid_labels, model, class_weights = None):
+
+    def model_1(Xtrain, train_labels, Xval, valid_labels, class_weights = None):
+        cnn_model = keras.Sequential([
+        keras.layers.Conv2D(32, (3, 3),1, activation='relu', input_shape=(30, 30, 3)),
+        keras.layers.MaxPooling2D((2, 2)),
+        keras.layers.Conv2D(64, (3, 3),1, activation='relu'),
+        keras.layers.MaxPooling2D((2, 2)),
+        keras.layers.Conv2D(64, (3, 3),1, activation='relu'),
+        keras.layers.MaxPooling2D((2, 2)),
+        keras.layers.Flatten(),
+        keras.layers.Dense(128, activation='relu'),
+        keras.layers.Dense(2,activation='softmax')
+        ])
+
+        my_callbacks = [keras.callbacks.EarlyStopping(monitor = 'val_loss', patience=10, restore_best_weights=True)]
+        cnn_model.compile(optimizer="adam", loss='categorical_crossentropy', metrics = f1_score)
 
 
-    # my_callbacks = [keras.callbacks.EarlyStopping(monitor = 'val_loss', patience=5, restore_best_weights=True)]
-    # cnn_model1.compile(optimizer="adam", loss='categorical_crossentropy', metrics = f1_score)
+        cnn_train = cnn_model.fit(Xtrain, train_labels,validation_data=(Xval, valid_labels),class_weight=class_weights, epochs= 50,batch_size=200, callbacks= my_callbacks)
+
+        test_eval = cnn_model.evaluate(Xval, valid_labels, verbose=1)
+
+        # Plots(cnn_train)
+
+        return cnn_model
 
 
-    # cnn1_train = cnn_model1.fit(Xtrain, train_labels,validation_data=(Xval, valid_labels),class_weight=class_weights, epochs= 30,batch_size=200, callbacks= my_callbacks)
-
-    # # cnn1_train = cnn_model1.fit(train_dataset,validation_data=(Xval, valid_labels), epochs= 30,batch_size=200, callbacks= my_callbacks)
-
-    # test_eval = cnn_model1.evaluate(Xval, valid_labels, verbose=1)
-#     cnn_model1 = keras.Sequential([
+#     cnn_model = keras.Sequential([
 #     keras.layers.Conv2D(16, kernel_size=(3, 3), activation='relu',padding='same',input_shape=(30, 30, 3)),
 #     keras.layers.Conv2D(16, kernel_size=(3, 3), activation='relu',padding='same'),
 #     keras.layers.MaxPooling2D(pool_size=(2, 2),strides=2),
@@ -243,49 +242,54 @@ def CNN(Xtrain, train_labels, Xval, valid_labels, class_weights = None):
 #     keras.layers.Dense(256, activation='relu'),
 #     keras.layers.Dense(2, activation='softmax')
 # ])
-
-    cnn_model1 = keras.Sequential([
-    keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu',padding='same',input_shape=(30, 30, 3)),
-    keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu',padding='same'),
-    keras.layers.MaxPooling2D(pool_size=(2, 2),strides=2),
-    keras.layers.Dropout(0.2),
-    keras.layers.Conv2D(64, kernel_size=(3, 3), activation='relu'),
-    keras.layers.Conv2D(64, kernel_size=(3, 3), activation='relu'),
-    keras.layers.BatchNormalization(),
-    keras.layers.MaxPooling2D(pool_size=(2, 2),strides=2),
-    keras.layers.Dropout(0.3),
-    keras.layers.Flatten(),
-    keras.layers.Dense(256, activation='relu'),
-    keras.layers.BatchNormalization(),
-    keras.layers.Dropout(0.7),
-    keras.layers.Dense(2, activation='softmax')
-])
-
-
-    my_callbacks = [keras.callbacks.EarlyStopping(monitor = 'val_loss', patience=10, restore_best_weights=True)]
-    cnn_model1.compile(optimizer="adam", loss='categorical_crossentropy', metrics = f1_score)
+    def model_2(Xtrain, train_labels, Xval, valid_labels, class_weights = None):
+        cnn_model = keras.Sequential([
+        keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu',padding='same',input_shape=(30, 30, 3)),
+        keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu',padding='same'),
+        keras.layers.MaxPooling2D(pool_size=(2, 2),strides=2),
+        keras.layers.Dropout(0.2),
+        keras.layers.Conv2D(64, kernel_size=(3, 3), activation='relu'),
+        keras.layers.Conv2D(64, kernel_size=(3, 3), activation='relu'),
+        keras.layers.BatchNormalization(),
+        keras.layers.MaxPooling2D(pool_size=(2, 2),strides=2),
+        keras.layers.Dropout(0.3),
+        keras.layers.Flatten(),
+        keras.layers.Dense(256, activation='relu'),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.7),
+        keras.layers.Dense(2, activation='softmax')
+        ])
 
 
-    cnn1_train = cnn_model1.fit(Xtrain, train_labels,validation_data=(Xval, valid_labels),class_weight=class_weights, epochs= 50,batch_size=200, callbacks= my_callbacks)
-
-    # cnn1_train = cnn_model1.fit(train_dataset,validation_data=(Xval, valid_labels), epochs= 30,batch_size=200, callbacks= my_callbacks)
-
-    test_eval = cnn_model1.evaluate(Xval, valid_labels, verbose=1)
-
-    return cnn_model1
+        my_callbacks = [keras.callbacks.EarlyStopping(monitor = 'val_loss', patience=10, restore_best_weights=True)]
+        cnn_model.compile(optimizer="adam", loss='categorical_crossentropy', metrics = f1_score)
 
 
+        cnn_train = cnn_model.fit(Xtrain, train_labels,validation_data=(Xval, valid_labels),class_weight=class_weights, epochs= 50,batch_size=200, callbacks= my_callbacks)
+
+
+        test_eval = cnn_model.evaluate(Xval, valid_labels, verbose=1)
+
+        # Plots(cnn_train)
+        return cnn_model
+    
+    if model == 1:
+        cnn_model = model_1(Xtrain, train_labels, Xval, valid_labels, class_weights = None)
+    elif model == 2:
+        cnn_model = model_2(Xtrain, train_labels, Xval, valid_labels, class_weights = None)
+
+    return cnn_model
 
 
 
 
 
-# usar a função predict
 
-#Imprimir resultados 
-# print('Test loss:', test_eval[0])
-# print('Test f1:', test_eval[1])
-# Plots(cnn1_train)
+
+
+
+
+
 
 #Avaliar modelo
 def model_evaluation(cnn_model, X, y):
@@ -306,53 +310,59 @@ def bacc(cnn_model, X, y_real):
     bacc = BACC(y_real, y_pred)
     return bacc
 
-l = 150
-a = []
-b = []
-c = []
-d = []
-e = []
-a1 = []
-b1 = []
-c1 = []
-d1 = []
-e1 = []
+def choose_dataset(model):
+    l = 5
+    a = []
+    b = []
+    c = []
+    d = []
+    e = []
+    a1 = []
+    b1 = []
+    c1 = []
+    d1 = []
+    e1 = []
 
-for i in range(l):
-    print(i)
-    if i<l/5: # With data augmentation
-        pass
-        # cnn_model = CNN(data_augment(Xtrain), train_labels, Xval, valid_labels)
-        # a.append(model_evaluation(cnn_model, Xval, yval))
-        # a1.append(bacc(cnn_model, Xval, yval))
-    elif l/5-1<i<2*l/5: # With balanced data
-        aux_X, aux_y = data_balance_generator(Xtrain, train_labels)
-        cnn_model = CNN(aux_X, aux_y, Xval, valid_labels)
-        b.append(model_evaluation(cnn_model, Xval, yval))
-        b1.append(bacc(cnn_model, Xval, yval))
-    elif 2*l/5-1<i<3*l/5: # with original data set
-        cnn_model = CNN(Xtrain, train_labels, Xval, valid_labels)
-        c.append(model_evaluation(cnn_model, Xval, yval))
-        c1.append(bacc(cnn_model, Xval, yval))
-    elif 3*l/5-1<i<4*l/5: # With data augmentation and balanced data set
-        pass
-        # aux_X, aux_y = data_balance_generator(Xtrain, train_labels)
-        # cnn_model = CNN(data_augment(aux_X), aux_y, Xval, valid_labels)
-        # d.append(model_evaluation(cnn_model, Xval, yval))
-        # d1.append(bacc(cnn_model, Xval, yval))
-    elif 4*l/5-1<i<l: # With re-weighting of classes
-        cnn_model = CNN(Xtrain, train_labels, Xval, valid_labels, class_weights= class_weights(ytrain))
-        e.append(model_evaluation(cnn_model, Xval, yval))
-        e1.append(bacc(cnn_model, Xval, yval))
+    for i in range(l):
+        print(i)
+        if i<l/5: # With data augmentation
+            pass
+            # cnn_model = CNN(data_augment(Xtrain_cnn), train_labels, Xval_cnn, valid_labels,model)
+            # a.append(model_evaluation(cnn_model, Xval_cnn, yval))
+            # a1.append(bacc(cnn_model, Xval_cnn, yval))
+        elif l/5-1<i<2*l/5: # With balanced data
+            aux_X, aux_y = data_balance_generator(Xtrain_cnn, train_labels)
+            cnn_model = CNN(aux_X, aux_y, Xval_cnn, valid_labels,model)
+            b.append(model_evaluation(cnn_model, Xval_cnn, yval))
+            b1.append(bacc(cnn_model, Xval_cnn, yval))
+        elif 2*l/5-1<i<3*l/5: # with original data set
+            cnn_model = CNN(Xtrain_cnn, train_labels, Xval_cnn, valid_labels,model)
+            c.append(model_evaluation(cnn_model, Xval_cnn, yval))
+            c1.append(bacc(cnn_model, Xval_cnn, yval))
+        elif 3*l/5-1<i<4*l/5: # With data augmentation and balanced data set
+            pass
+            # aux_X, aux_y = data_balance_generator(Xtrain_cnn, train_labels)
+            # cnn_model = CNN(data_augment(aux_X), aux_y, Xval_cnn, valid_labels,model)
+            # d.append(model_evaluation(cnn_model, Xval_cnn, yval))
+            # d1.append(bacc(cnn_model, Xval_cnn, yval))
+        elif 4*l/5-1<i<l: # With re-weighting of classes
+            cnn_model = CNN(Xtrain_cnn, train_labels, Xval_cnn, valid_labels,model, class_weights= class_weights(ytrain))
+            e.append(model_evaluation(cnn_model, Xval_cnn, yval))
+            e1.append(bacc(cnn_model, Xval_cnn, yval))
 
 
 
 
-# print('f1 std:',np.std(a), 'f1 mean:',np.mean(a), 'bacc std:',np.std(a1), 'bacc mean:',np.mean(a1))
-print('f1 std:',np.std(b), 'f1 mean:',np.mean(b), 'bacc std:',np.std(b1), 'bacc mean:',np.mean(b1),'max f1:', np.max(b),'min f1:', np.min(b))
-print('f1 std:',np.std(c), 'f1 mean:',np.mean(c), 'bacc std:',np.std(c1), 'bacc mean:',np.mean(c1),'max f1:', np.max(c),'min f1:', np.min(c))
-# print('f1 std:',np.std(d), 'f1 mean:',np.mean(d), 'bacc std:',np.std(d1), 'bacc mean:',np.mean(d1))
-print('f1 std:',np.std(e), 'f1 mean:',np.mean(e), 'bacc std:',np.std(e1), 'bacc mean:',np.mean(e1),'max f1:', np.max(e),'min f1:', np.min(e))
+    # print('f1 std:',np.std(a), 'f1 mean:',np.mean(a), 'bacc std:',np.std(a1), 'bacc mean:',np.mean(a1))
+    print('f1 std:',np.std(b), 'f1 mean:',np.mean(b), 'bacc std:',np.std(b1), 'bacc mean:',np.mean(b1),'max f1:', np.max(b),'min f1:', np.min(b))
+    print('f1 std:',np.std(c), 'f1 mean:',np.mean(c), 'bacc std:',np.std(c1), 'bacc mean:',np.mean(c1),'max f1:', np.max(c),'min f1:', np.min(c))
+    # print('f1 std:',np.std(d), 'f1 mean:',np.mean(d), 'bacc std:',np.std(d1), 'bacc mean:',np.mean(d1))
+    print('f1 std:',np.std(e), 'f1 mean:',np.mean(e), 'bacc std:',np.std(e1), 'bacc mean:',np.mean(e1),'max f1:', np.max(e),'min f1:', np.min(e))
+
+
+# choose_dataset(2)
+
+
 # plt.figure()
 # plt.boxplot(a)
 # plt.figure()
