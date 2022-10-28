@@ -1,38 +1,3 @@
-#from matplotlib import pyplot as plt
-#import numpy as np
-#X= np.load('Xtrain_Classification1.npy')
-#Y= np.load('ytrain_Classification1.npy')
-
-
-#from sklearn import svm
-#X = [[0, 0], [1, 1]]
-#y = [0, 1]
-#clf = svm.SVC()
-#clf.fit(X, y)
-
-#clf.predict([[2., 2.]])
-
-
-
-
-#print(X[600].reshape((30,30,3)))
-#plt.imshow(X[233].reshape(30,30,3))
-#plt.show()
-#print(Y[233])
-
-#from numpy.random import rand
-#from matplotlib.pyplot import imshow
-
-#img = rand(5, 5)  # Creating a 5x5 matrix of random numbers.
-
-# Use bilinear interpolation (or it is displayed as bicubic by default).
-#plt.imshow(img, interpolation="nearest")  
-#plt.show()
-
-
-
-
-
 """
 *******************************************************************************************
 Autores: Duarte Silva (ist193243) e João Paiva (ist1105737)
@@ -117,22 +82,10 @@ def Plots(model_train):
 
 X = np.load('Xtrain_Classification1.npy')
 Y = np.load('ytrain_Classification1.npy')
-# X_test = np.load('Xtest_Regression1.npy')
 
-# print(np.count_nonzero(Y==0))
-# print(np.count_nonzero(Y==1))
-# train_set = X.reshape(-1, 30, 30, 3)
-# plt.imshow(train_set[500])
-# plt.show()
-#### SPLIT DATA   ####
-# Xtrain, Xtest, ytrain, ytest = train_test_split(X,Y, test_size=0.20,random_state=2)
-
-# Xtrain, Xval, ytrain, yval = train_test_split(Xtrain,ytrain, test_size=0.10,random_state=2)
-
-# Xtrain, Xtest, ytrain, ytest = train_test_split(X,Y, test_size=0.20, shuffle=True)
 
 Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.20, random_state=2)
-# Xtrain, Xval, ytrain, yval = train_test_split(Xtrain,ytrain, test_size=0.10, shuffle=True)
+
 
 ####  NORMALIZE DATA   ####
 
@@ -140,10 +93,7 @@ Xtrain = Xtrain/255
 Xval = Xval/255
 # Xtest = Xtest/255
 
-#Reshape
-Xtrain = Xtrain.reshape(-1, 30, 30, 3)
-Xval = Xval.reshape(-1, 30, 30, 3)
-# Xtest = Xtest.reshape(-1, 30, 30, 3)
+
 
 #print(Xtrain)
 
@@ -181,11 +131,38 @@ Xval = Xval.reshape(-1, 30, 30, 3)
 
 
 
+
 ##############Logistic Regression###################
+from sklearn.model_selection import GridSearchCV
 
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score
 
-model = LogisticRegression()
-model.fit(Xtrain,ytrain)
-#model.predict(Xval)
-#model.score(Xval,yval)
+#model = LogisticRegression(max_iter=2700, solver='liblinear')
+#model.fit(Xtrain,ytrain)
+#y_pred = model.predict(Xval)
+#print('Logistic Regression Score')
+#print(model.score(Xval,yval))
+#print('Logistic Regression F1 Score')
+#print(f1_score(yval,y_pred))
+
+
+##############Support vector machine###################
+
+from sklearn.svm import SVC
+#from sklearn.metrics import accuracy_score
+#param_grid = {'Kernel':['rbf'],'C': [0.1, 1, 10, 100, 1000], 'gamma':['scale','auto', 0.1, 1, 10, 100, 1000], 'shrinking':['True','False'],'decision_function_shape':['ovo','ovr']}
+param_grid = { 'gamma':[0.009],'C': [5, 10, 15, 20]}
+grid = GridSearchCV(SVC(), param_grid, refit = True, verbose=3)
+grid.fit(Xtrain,ytrain)
+print(grid.best_params_)
+print(grid.best_estimator_)
+grid_predictions= grid.predict(Xval)
+print(f1_score(yval,grid_predictions))
+#clf = SVC(kernel='rbf')
+#clf.fit(Xtrain,ytrain)
+#y_pred1 = clf.predict(Xval)
+#print('Support vector machine Score')
+#print(accuracy_score(yval,y_pred1))
+print('Support vector machine F1 Score')
+#print(f1_score(yval,y_pred1))
