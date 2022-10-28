@@ -22,6 +22,8 @@ from sklearn.utils import class_weight
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 
 
 ##################################################   Functions   ##################################################
@@ -229,6 +231,17 @@ def other_methods(Xtrain, ytrain, train_labels, Xval, yval, models, scores):
     models.append(DTC)
     scores.append(met.f1_score(yval,pred_y))
 
+    # Logistic regression
+    LogReg = LogisticRegression(C = 0.01, class_weight=class_weights(ytrain))
+    pred_y = LogReg.fit(Xtrain,ytrain).predict(Xval)
+    models.append(LogReg)
+    scores.append(met.f1_score(yval,pred_y))
+
+    # SVC
+    svc = SVC(class_weight=class_weights(ytrain),C=3, gamma='scale', kernel='rbf')
+    pred_y = svc.fit(Xtrain,ytrain).predict(Xval)
+    models.append(LogReg)
+    scores.append(met.f1_score(yval,pred_y))
     return models, scores
 
 
@@ -382,26 +395,4 @@ np.save('Y_Predicted.npy', y_predict)
 print(np.shape(X_test))
 print(np.shape(y_predict))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# [0.7960308710033076, 0.8269430051813471, 0.5261121856866537, 0.6849056603773586, 0.613588110403397, 0.6575342465753425, 0.7571288102261554] # scores
