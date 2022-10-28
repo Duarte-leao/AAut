@@ -24,6 +24,10 @@ from sklearn.tree import DecisionTreeClassifier
 X = np.load('Xtrain_Classification1.npy')
 Y = np.load('ytrain_Classification1.npy')
 
+Y_pred = np.load('Y_Predicted.npy')
+print(sum(Y_pred))
+
+
 Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.15)
 
 # Xtrain = Xtrain/255
@@ -130,11 +134,11 @@ Xtrain_not_CNN, ytrain_not_CNN = data_balance_generator(Xtrain, train_labels, Fa
 
 
 ##############Logistic Regression###################
-from sklearn.model_selection import GridSearchCV
+# from sklearn.model_selection import GridSearchCV
 
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import f1_score
+# from sklearn.linear_model import LogisticRegressionCV
+# from sklearn.linear_model import LogisticRegression
+# from sklearn.metrics import f1_score
 
 # param_grid = {'C': [0.04, 0.05], 'max_iter': [2700]}
 # grid = GridSearchCV(LogisticRegression(), param_grid, refit = True, verbose=3)
@@ -161,8 +165,8 @@ from sklearn.metrics import f1_score
 
 ##############Support vector machine###################
 
-from sklearn.svm import SVC
-from sklearn.svm import LinearSVC
+# from sklearn.svm import SVC
+# from sklearn.svm import LinearSVC
 # from sklearn.metrics import accuracy_score 
 # param_grid = { 'gamma':[0.008,0.009],'C': [0.5,  3], 'kernel': ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed'], 'degree': [3]}
 # param_grid = { 'gamma':['scale'],'C': [4,5], 'kernel': [ 'rbf']}
@@ -180,11 +184,11 @@ from sklearn.svm import LinearSVC
 # print(f1_score(yval,grid_predictions))
 
 
-svc = SVC(class_weight=class_weights(ytrain),C=3, gamma='scale', kernel='rbf')
-svc2 = SVC(class_weight=class_weights(ytrain), C=4, gamma='scale', kernel='rbf')
-pred_y = svc.fit(Xtrain,ytrain).predict(Xval)
-pred_y2 = svc2.fit(Xtrain,ytrain).predict(Xval)
+# svc = SVC(class_weight=class_weights(ytrain),C=3, gamma='scale', kernel='rbf')
+# svc2 = SVC(class_weight=class_weights(ytrain), C=4, gamma='scale', kernel='rbf')
+# pred_y = svc.fit(Xtrain,ytrain).predict(Xval)
+# pred_y2 = svc2.fit(Xtrain,ytrain).predict(Xval)
 
-# {'C': 5, 'gamma': 'scale', 'kernel': 'rbf'}
-print(met.f1_score(yval,pred_y))
-print(met.f1_score(yval,pred_y2))
+# # {'C': 5, 'gamma': 'scale', 'kernel': 'rbf'}
+# print(met.f1_score(yval,pred_y))
+# print(met.f1_score(yval,pred_y2))
