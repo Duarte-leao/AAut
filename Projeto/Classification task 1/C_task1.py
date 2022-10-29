@@ -214,34 +214,35 @@ def other_methods(Xtrain, ytrain, train_labels, Xval, yval, models, scores):
 
     # Gaussian Naive Bayes Classifier
     gnb = GaussianNB()
-    pred_y = gnb.fit(Xtrain_not_CNN,ytrain_not_CNN).predict(Xval)
     models.append(gnb)
+    pred_y = gnb.fit(Xtrain_not_CNN,ytrain_not_CNN).predict(Xval)
     scores.append(met.f1_score(yval,pred_y))
     # print(met.confusion_matrix(yval,pred_y))
 
     # KNN Classifier
     KNN = KNeighborsClassifier(n_neighbors=51, weights= 'distance')
-    pred_y = KNN.fit(Xtrain_not_CNN,ytrain_not_CNN).predict(Xval) 
-    models.append(KNN)
+    models.append(KNN)    
+    pred_y = KNN.fit(Xtrain_not_CNN,ytrain_not_CNN).predict(Xval)     
     scores.append(met.f1_score(yval,pred_y))
 
     # Decision Tree Classifier
     DTC = DecisionTreeClassifier(class_weight = class_weights(ytrain))
-    pred_y = DTC.fit(Xtrain,ytrain).predict(Xval)
     models.append(DTC)
+    pred_y = DTC.fit(Xtrain,ytrain).predict(Xval)
     scores.append(met.f1_score(yval,pred_y))
 
     # Logistic regression
     LogReg = LogisticRegression(C = 0.01, class_weight=class_weights(ytrain))
-    pred_y = LogReg.fit(Xtrain,ytrain).predict(Xval)
     models.append(LogReg)
+    pred_y = LogReg.fit(Xtrain,ytrain).predict(Xval)
     scores.append(met.f1_score(yval,pred_y))
 
     # SVC
     svc = SVC(class_weight=class_weights(ytrain),C=3, gamma='scale', kernel='rbf')
+    models.append(svc)
     pred_y = svc.fit(Xtrain,ytrain).predict(Xval)
-    models.append(LogReg)
     scores.append(met.f1_score(yval,pred_y))
+
     return models, scores
 
 
@@ -374,6 +375,7 @@ while np.max(scores) < 0.81:
     print(np.max(scores))
 
 
+
 # Choose best Classifier
 
 max_f1 = np.argmax(scores)
@@ -388,11 +390,13 @@ if max_f1 < 2:
     y_predict = classifier.predict(X_test)
     y_predict = categorical_to_binary(y_predict)
 else:
-    y_predict = classifier.predict(X_test)
+    y_predict = classifier.fit(X,Y).predict(X_test)
 
-np.save('Y_Predicted.npy', y_predict)
+np.save('Y_Predicted3.npy', y_predict)
+
+
 
 print(np.shape(X_test))
 print(np.shape(y_predict))
 
-# [0.7960308710033076, 0.8269430051813471, 0.5261121856866537, 0.6849056603773586, 0.613588110403397, 0.6575342465753425, 0.7571288102261554] # scores
+# [0.7910798122065726, 0.8296460176991151, 0.5306495882891127, 0.706405693950178, 0.6130434782608696, 0.6577693040991421, 0.7459252157238734] # scores
