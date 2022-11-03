@@ -26,60 +26,6 @@ import sklearn.metrics as met
 #from imblearn.under_sampling import NearMiss
 
 
-def f1_score(y_true, y_pred): 
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)), axis=0)[1]
-    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)), axis=0)[1]
-    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)), axis=0)[1]
-    precision = true_positives / (predicted_positives)
-    recall = true_positives / (possible_positives)
-    f1_val = 2*(precision*recall)/(precision+recall)
-
-    
-    # true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    # # print(true_positives)
-    # possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-    # predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-    # precision = true_positives / (predicted_positives + K.epsilon())
-    # recall = true_positives / (possible_positives + K.epsilon())
-    # f1_val = 2*(precision*recall)/(precision+recall+K.epsilon())
-    return f1_val
-
-def traduz_vec(prob_vec):
-    # print(prob_vec)
-
-    pred_labels=[]
-    # for i in range(len(prob_vec)):
-    #     if prob_vec[i,0] > 0.5:
-    #         pred_labels.append(0) 
-    #     elif prob_vec[i,1] >= 0.5:
-    #         pred_labels.append(1) 
-    for i in range(len(prob_vec)):
-        if prob_vec[i,0] > prob_vec[i,1]:
-            pred_labels.append(0) 
-        elif prob_vec[i,0] < prob_vec[i,1]:
-            pred_labels.append(1) 
-            
-    pred_labels = np.ravel(pred_labels)
-    return pred_labels
-
-#Monotorização da função de custo
-def Plots(model_train):
-    f1_score = model_train.history['f1_score']
-    val_f1_score = model_train.history['val_f1_score']
-    loss = model_train.history['loss']
-    val_loss = model_train.history['val_loss']
-    epochs = range(len(f1_score))
-    plt.plot(epochs, f1_score, 'g', label='Training f1 score')
-    plt.plot(epochs, val_f1_score, 'r', label='Validation f1 score')
-    plt.title('Training and validation f1 score')
-    plt.legend()
-    plt.figure()
-    plt.plot(epochs, loss, 'g', label='Training loss')
-    plt.plot(epochs, val_loss, 'r', label='Validation loss')
-    plt.title('Training and validation loss')
-    plt.legend()
-    plt.show()
-
 X = np.load('Xtrain_Classification1.npy')
 Y = np.load('ytrain_Classification1.npy')
 
@@ -93,6 +39,7 @@ Xtrain = Xtrain/255
 Xval = Xval/255
 # Xtest = Xtest/255
 
+<<<<<<< HEAD
 
 
 #print(Xtrain)
@@ -130,6 +77,8 @@ Xval = Xval/255
 
 
 
+=======
+>>>>>>> 1b908b9a6bf0fffb32aecc68f126eb6ad22ad0e9
 
 
 ##############Logistic Regression###################
@@ -138,6 +87,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score
 
+<<<<<<< HEAD
 #model = LogisticRegression(max_iter=2700, solver='liblinear')
 #model.fit(Xtrain,ytrain)
 #y_pred = model.predict(Xval)
@@ -145,19 +95,42 @@ from sklearn.metrics import f1_score
 #print(model.score(Xval,yval))
 #print('Logistic Regression F1 Score')
 #print(f1_score(yval,y_pred))
+=======
+param_grid = {'C': [0.04, 0.05], 'max_iter': [2700]}
+grid = GridSearchCV(LogisticRegression(), param_grid, refit = True, verbose=3)
+grid.fit(Xtrain,ytrain)
+print(grid.best_params_)
+print(grid.best_estimator_)
+grid_predictions= grid.predict(Xval)
+print('Logistic Regression F1 Score')
+print(f1_score(yval,grid_predictions))
+
+#Melhor Resultado para os parametros de LogisticRegression
+#{'C': 0.05, 'max_iter': 2700}
+#LogisticRegression(C=0.05, max_iter=2700)
+#Logistic Regression F1 Score
+#0.5927272727272729
+
+>>>>>>> 1b908b9a6bf0fffb32aecc68f126eb6ad22ad0e9
 
 
 ##############Support vector machine###################
 
 from sklearn.svm import SVC
+<<<<<<< HEAD
 #from sklearn.metrics import accuracy_score
 #param_grid = {'Kernel':['rbf'],'C': [0.1, 1, 10, 100, 1000], 'gamma':['scale','auto', 0.1, 1, 10, 100, 1000], 'shrinking':['True','False'],'decision_function_shape':['ovo','ovr']}
 param_grid = { 'gamma':[0.009],'C': [5, 10, 15, 20]}
+=======
+from sklearn.metrics import accuracy_score
+param_grid = { 'gamma':['scale',0.009],'C': [2, 3, 4]}
+>>>>>>> 1b908b9a6bf0fffb32aecc68f126eb6ad22ad0e9
 grid = GridSearchCV(SVC(), param_grid, refit = True, verbose=3)
 grid.fit(Xtrain,ytrain)
 print(grid.best_params_)
 print(grid.best_estimator_)
 grid_predictions= grid.predict(Xval)
+<<<<<<< HEAD
 print(f1_score(yval,grid_predictions))
 #clf = SVC(kernel='rbf')
 #clf.fit(Xtrain,ytrain)
@@ -166,3 +139,12 @@ print(f1_score(yval,grid_predictions))
 #print(accuracy_score(yval,y_pred1))
 print('Support vector machine F1 Score')
 #print(f1_score(yval,y_pred1))
+=======
+print('Support vector machine F1 Score')
+print(f1_score(yval,grid_predictions))
+
+#Melhor Resultado para os parametros de Support vector machine
+#{'C': 3, 'gamma': 0.009}
+#SVC(C=3, gamma=0.009)
+#0.7450657894736842
+>>>>>>> 1b908b9a6bf0fffb32aecc68f126eb6ad22ad0e9
