@@ -48,6 +48,8 @@ def balance_data(x, y, method):
 # Score
 def BACC(y_true, y_pred, *, sample_weight=None, adjusted=False):
 
+    # print(y_true)
+    # print(y_pred)
     shape = np.shape(y_pred)
     if np.sum(shape)>shape[0]:
         y_true = undo_one_hot_encoding(y_true)
@@ -160,7 +162,8 @@ def best_model(Classifiers, params):
         classifier_cv.fit(Xtrain, ytrain)
         Scores.append(classifier_cv.best_score_)
     print(Scores)
-
+    # Scores
+    # [0.8820236447035272, 0.9096238273878492, 0.8578112489289657, 0.7784271347421321, 0.8736156059194251, 0.7613127666499254]
     return np.argmax(Scores)
 
 def prediction(Classifiers_best,Classifiers, params):
@@ -200,7 +203,8 @@ X_test = np.load('Xtest_Classification2.npy')
 X = X/255
 X_test = X_test/255
 
-Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.2)
+# Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.2)
+# Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.15, random_state=2)
 
 
     
@@ -216,14 +220,23 @@ Classifiers_with_best_params = [MLP(n_layers= 4, first_layer_nodes=128, last_lay
                                 DecisionTreeClassifier(criterion= 'gini', min_samples_split= 5, splitter= 'best'), RandomForestClassifier(criterion= 'entropy', min_samples_split= 2, n_estimators= 150, n_jobs=-1),
                                 LogisticRegression(penalty = 'l2', C = 2, solver = 'lbfgs',max_iter=1000, n_jobs=-1)]
 
+# y_sum_predictions = 0
+# for i in range(50):
+#     print(i)
+Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.2)
 
+# y_predict_aux = prediction(Classifiers_with_best_params, Classifiers, best_params)
+# y_sum_predictions += tf.keras.utils.to_categorical(y_predict_aux, num_classes=3)
 
-
+# y_predict = undo_one_hot_encoding(y_sum_predictions)
 y_predict = prediction(Classifiers_with_best_params, Classifiers, best_params)
 
 np.save('Y_Predicted.npy', y_predict)
+# np.save('Y_Predicted4.npy', y_predict)
 
+# y_pred1 = np.load('Y_PredictedRF.npy')
+# y_pred2 = np.load('Y_Predicted50.npy')
 
-
+# BACC(y_pred2, y_pred1)
 print(np.shape(X_test))
 print(np.shape(y_predict))
