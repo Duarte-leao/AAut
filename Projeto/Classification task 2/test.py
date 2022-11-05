@@ -404,17 +404,29 @@ def hyperparameter_tunning(x_training, y_training, Classifiers):
         # (penalty = 'l2', C = 2, solver = 'lbfgs',max_iter=1000, n_jobs=-1) #Logistic reg
 
 def best_model(Classifiers, params):
+    # Scores = []
+    # scoring = {'score': met.make_scorer(BACC)}
+    # for i, classifier in enumerate(Classifiers):
+    #     pipeline = imbpipeline(steps = [('sampling', sampling_method(0,1)),('classifier', classifier)])
+    #     if i == 0:
+    #         classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit="score", verbose=2)
+    #     else:
+    #         classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit="score", n_jobs=-1, verbose=2)
+    #     classifier_cv.fit(Xtrain, ytrain)
+    #     Scores.append(classifier_cv.best_score_)
+    # print(Scores)
     Scores = []
     scoring = {'score': met.make_scorer(BACC)}
-    for i, classifier in enumerate(Classifiers):
-        pipeline = imbpipeline(steps = [('sampling', sampling_method(0,1)),('classifier', classifier)])
-        if i == 0:
-            classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit="score", verbose=2)
-        else:
-            classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit="score", n_jobs=-1, verbose=2)
-        classifier_cv.fit(Xtrain, ytrain)
-        Scores.append(classifier_cv.best_score_)
-    print(Scores)
+    classifier = Classifiers[0]
+    # for i, classifier in enumerate(Classifiers):
+    pipeline = imbpipeline(steps = [('sampling', sampling_method(1,1)),('classifier', classifier)])
+        # if i == 0:
+    classifier_cv = GridSearchCV(pipeline , params[0], scoring=scoring, cv= 4,refit="score", verbose=2)
+        # else:
+    # classifier_cv = GridSearchCV(pipeline , params[1], scoring=scoring, cv= 4,refit="score", n_jobs=-1, verbose=2)
+        # classifier_cv.fit(Xtrain, ytrain)
+    classifier_cv.fit(X, Y)
+    Scores.append(classifier_cv.best_score_)
     # Scores
     # [0.8820236447035272, 0.9096238273878492, 0.8578112489289657, 0.7784271347421321, 0.8736156059194251, 0.7613127666499254]
     return np.argmax(Scores)
@@ -478,15 +490,15 @@ Classifiers_with_best_params = [MLP(n_layers= 4, first_layer_nodes=128, last_lay
                                 DecisionTreeClassifier(criterion= 'gini', min_samples_split= 5, splitter= 'best'), RandomForestClassifier(criterion= 'entropy', min_samples_split= 2, n_estimators= 150, n_jobs=-1),
                                 LogisticRegression(penalty = 'l2', C = 2, solver = 'lbfgs',max_iter=1000, n_jobs=-1)]
 
-X, Xval_t, Y, yval_t = train_test_split(X, Y, test_size=0.4)
-y_sum_predictions = 0
-for i in range(1):
-    print(i)
-    Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.2)
-    y_predict_aux = prediction(Classifiers_with_best_params, Classifiers, best_params)
-    y_sum_predictions += tf.keras.utils.to_categorical(y_predict_aux, num_classes=3)
+X, Xval_t, Y, yval_t = train_test_split(X, Y, test_size=0.3, random_state=2)
+# y_sum_predictions = 0
+# for i in range(1):
+#     print(i)
+Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.2)
+y_predict = prediction(Classifiers_with_best_params, Classifiers, best_params)
+    # y_sum_predictions += tf.keras.utils.to_categorical(y_predict_aux, num_classes=3)
 
-y_predict = undo_one_hot_encoding(y_sum_predictions)
+# y_predict = undo_one_hot_encoding(y_sum_predictions)
 
 # 0.7519794654405493
 # np.save('Y_Predicted50.npy', y_predict)

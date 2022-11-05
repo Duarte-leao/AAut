@@ -153,14 +153,14 @@ def best_model(Classifiers, params):
     scoring = {'score': met.make_scorer(BACC)}
     for i, classifier in enumerate(Classifiers):
         pipeline = imbpipeline(steps = [('sampling', sampling_method(1,1)),('classifier', classifier)])
+        # pipeline = imbpipeline(steps = [('sampling', sampling_method(1,1)),('classifier', classifier)])
         if i == 0:
-            classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit="score", verbose=2)
+            classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit='score', verbose=2)
         else:
-            classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit="score", n_jobs=-1, verbose=2)
-        classifier_cv.fit(Xtrain, ytrain)
+            classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit='score', n_jobs=-1, verbose=2)
+        classifier_cv.fit(X, Y)
         Scores.append(classifier_cv.best_score_)
     print(Scores)
-
     return np.argmax(Scores)
 
 def prediction(Classifiers_best,Classifiers, params):

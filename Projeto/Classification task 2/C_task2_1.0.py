@@ -153,21 +153,23 @@ def hyperparameter_tunning(x_training, y_training, Classifiers):
 def best_model(Classifiers, params):
     Scores = []
     scoring = {'score': met.make_scorer(BACC)}
-    for i, classifier in enumerate(Classifiers):
-        pipeline = imbpipeline(steps = [('sampling', sampling_method(1,1)),('classifier', classifier)])
-        if i == 0:
-            classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit="score", verbose=2)
-        else:
-            classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit="score", n_jobs=-1, verbose=2)
-        classifier_cv.fit(Xtrain, ytrain)
-        Scores.append(classifier_cv.best_score_)
+    classifier = Classifiers[4]
+    # for i, classifier in enumerate(Classifiers):
+    pipeline = imbpipeline(steps = [('sampling', sampling_method(1,1)),('classifier', classifier)])
+        # if i == 0:
+        #     classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit="score", verbose=2)
+        # else:
+    classifier_cv = GridSearchCV(pipeline , params[4], scoring=scoring, cv= 4,refit="score", n_jobs=-1, verbose=2)
+        # classifier_cv.fit(Xtrain, ytrain)
+    classifier_cv.fit(X, Y)
+    Scores.append(classifier_cv.best_score_)
     print(Scores)
     # Scores
     # [0.8820236447035272, 0.9096238273878492, 0.8578112489289657, 0.7784271347421321, 0.8736156059194251, 0.7613127666499254]
     return np.argmax(Scores)
 
 def prediction(Classifiers_best,Classifiers, params):
-    # chosen_model = best_model(Classifiers, params) 
+    chosen_model = best_model(Classifiers, params) 
     # print(chosen_model)
     chosen_model = 4 # Because RF yields the best results
     classifier = Classifiers_best[chosen_model]
@@ -231,12 +233,12 @@ Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.2)
 # y_predict = undo_one_hot_encoding(y_sum_predictions)
 y_predict = prediction(Classifiers_with_best_params, Classifiers, best_params)
 
-np.save('Y_Predicted.npy', y_predict)
+# np.save('Y_Predicted.npy', y_predict)
 # np.save('Y_Predicted4.npy', y_predict)
 
 # y_pred1 = np.load('Y_PredictedRF.npy')
-# y_pred2 = np.load('Y_Predicted50.npy')
+# y_pred2 = np.load('Y_Predicted_mlp.npy')
 
 # BACC(y_pred2, y_pred1)
-print(np.shape(X_test))
-print(np.shape(y_predict))
+# print(np.shape(X_test))
+# print(np.shape(y_predict))
