@@ -28,7 +28,8 @@ from sklearn.svm import SVC
 from sklearn import svm
 import sklearn.model_selection as model_selection
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import balanced_accuracy_score
+
+
 
 
 
@@ -63,10 +64,19 @@ poly = svm.SVC(kernel='poly', degree=3, C=1).fit(Xtrain, ytrain)
 poly_pred = poly.predict(Xval)
 rbf_pred = rbf.predict(Xval)
 
+###### Accuracy ######
+
+poly_accuracy = BACC(yval,poly_pred)
+print('Accuracy (Polynomial Kernel): ', "%.5f" % (poly_accuracy*100))
+
+rbf_accuracy = BACC(yval,rbf_pred)
+print('Accuracy (RBF Kernel): ', "%.5f" % (rbf_accuracy*100))
+
 ###### Balanced Accuracy ######
 
-poly_accuracy = balanced_accuracy_score(yval,poly_pred)
+poly_accuracy = BACC(yval,poly_pred)
 print('Balanced Accuracy (Polynomial Kernel): ', "%.5f" % (poly_accuracy*100))
 
-rbf_accuracy = balanced_accuracy_score(yval,rbf_pred)
+rbf_accuracy = BACC(yval,rbf_pred)
 print('Balanced Accuracy (RBF Kernel): ', "%.5f" % (rbf_accuracy*100))
+
