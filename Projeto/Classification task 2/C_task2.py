@@ -153,7 +153,7 @@ def best_model(Classifiers, params):
     scoring = {'score': met.make_scorer(BACC)}
     for i, classifier in enumerate(Classifiers):
         pipeline = imbpipeline(steps = [('sampling', sampling_method(1,1)),('classifier', classifier)])
-        # pipeline = imbpipeline(steps = [('sampling', sampling_method(1,1)),('classifier', classifier)])
+        # pipeline = imbpipeline(steps = [('sampling', sampling_method(1,0)),('classifier', classifier)])
         if i == 0:
             classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit='score', verbose=2)
         else:
