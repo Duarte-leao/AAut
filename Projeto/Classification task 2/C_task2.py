@@ -11,6 +11,7 @@ import tensorflow as tf
 from tensorflow import keras
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import cross_validate
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -77,7 +78,7 @@ def FindLayerNodesLinear(n_layers, first_layer_nodes, last_layer_nodes):
     for i in range(1, n_layers+1):
         layers.append(math.ceil(nodes))
         nodes = nodes + nodes_increment
-    
+    print(layers)
     return layers
 
 def MLP(n_layers, first_layer_nodes, last_layer_nodes, activation_func, metrics = None):
@@ -169,7 +170,8 @@ def prediction(Classifiers_best,Classifiers, params):
     chosen_model = 4 # Because RF yields the best results
     classifier = Classifiers_best[chosen_model]
     X_train, y_train = balance_data(Xtrain, ytrain, 1)
-    X_, Y_ = balance_data(X, Y, 1)
+    X_, Y_ = balance_data(Xtrain, ytrain, 1)
+    # X_, Y_ = balance_data(X, Y, 1)
     if chosen_model == 0:
         train_labels = tf.keras.utils.to_categorical(y_train, num_classes=3)
         valid_labels = tf.keras.utils.to_categorical(yval, num_classes=3)
@@ -182,13 +184,26 @@ def prediction(Classifiers_best,Classifiers, params):
         y_val_pred = classifier.predict(Xval)
         y_val_pred = undo_one_hot_encoding(y_val_pred)
     else:
+        # classifier.fit(Xtrain, ytrain)
         classifier.fit(X_, Y_)
         y_pred = classifier.predict(X_test)
         y_val_pred = classifier.predict(Xval)
 
-    # BACC(yval, y_val_pred)
-    return y_pred
 
+    # cm = confusion_matrix(yval, y_val_pred)
+    # disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+    #                       display_labels=np.array(['white center', 'rings', 'background']), normalize = )
+    disp = ConfusionMatrixDisplay.from_estimator(
+        classifier,
+        Xval,
+        yval,
+        display_labels=['white center', 'rings', 'background'],
+        normalize='true')
+    disp.plot()
+    plt.show()
+    BACC(yval, y_val_pred)
+    return y_pred
+    # [0.8736 0.9062 0.8621 0.7366 0.8656 0.7620]
 ##################################################   Main   ##################################################
 X = np.load('Xtrain_Classification2.npy')
 Y = np.load('Ytrain_Classification2.npy')
@@ -221,9 +236,9 @@ Classifiers_with_best_params = [MLP(n_layers= 4, first_layer_nodes=128, last_lay
 
 y_predict = prediction(Classifiers_with_best_params, Classifiers, best_params)
 
-np.save('Y_Predicted.npy', y_predict)
+# np.save('Y_Predicted.npy', y_predict)
 
 
 
-print(np.shape(X_test))
-print(np.shape(y_predict))
+# print(np.shape(X_test))
+# print(np.shape(y_predict))

@@ -417,11 +417,11 @@ def best_model(Classifiers, params):
     # print(Scores)
     Scores = []
     scoring = {'score': met.make_scorer(BACC)}
-    classifier = Classifiers[0]
+    classifier = Classifiers[1]
     # for i, classifier in enumerate(Classifiers):
     pipeline = imbpipeline(steps = [('sampling', sampling_method(1,1)),('classifier', classifier)])
         # if i == 0:
-    classifier_cv = GridSearchCV(pipeline , params[0], scoring=scoring, cv= 4,refit="score", verbose=2)
+    classifier_cv = GridSearchCV(pipeline , params[1], scoring=scoring, cv= 5,refit="score", verbose=2)
         # else:
     # classifier_cv = GridSearchCV(pipeline , params[1], scoring=scoring, cv= 4,refit="score", n_jobs=-1, verbose=2)
         # classifier_cv.fit(Xtrain, ytrain)
@@ -434,10 +434,12 @@ def best_model(Classifiers, params):
 def prediction(Classifiers_best,Classifiers, params):
     # chosen_model = best_model(Classifiers, params) 
     # print(chosen_model)
-    chosen_model = 4 # Because KNN yields the best results
+    chosen_model = 5 # Because KNN yields the best results
     classifier = Classifiers_best[chosen_model]
     X_train, y_train = balance_data(Xtrain, ytrain, 1)
-    X_, Y_ = balance_data(X, Y, 1)
+    X_, Y_ = balance_data(Xtrain, ytrain, 1)
+    # X_, Y_ = balance_data(X, Y, 1)
+
 
     if chosen_model == 0:
         train_labels = tf.keras.utils.to_categorical(y_train, num_classes=3)
@@ -492,23 +494,29 @@ Classifiers_with_best_params = [MLP(n_layers= 4, first_layer_nodes=128, last_lay
 
 X, Xval_t, Y, yval_t = train_test_split(X, Y, test_size=0.3, random_state=2)
 # y_sum_predictions = 0
-# for i in range(1):
+scores = []
+# for i in range(10):
 #     print(i)
+    # X, Xval_t, Y, yval_t = train_test_split(X, Y, test_size=0.3, random_state=2)
 Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.2)
 y_predict = prediction(Classifiers_with_best_params, Classifiers, best_params)
-    # y_sum_predictions += tf.keras.utils.to_categorical(y_predict_aux, num_classes=3)
+        # y_sum_predictions += tf.keras.utils.to_categorical(y_predict_aux, num_classes=3)
 
-# y_predict = undo_one_hot_encoding(y_sum_predictions)
+    # y_predict = undo_one_hot_encoding(y_sum_predictions)
 
-# 0.7519794654405493
-# np.save('Y_Predicted50.npy', y_predict)
-# np.save('Y_Predicted4.npy', y_predict)
+    # 0.7519794654405493
+    # np.save('Y_Predicted50.npy', y_predict)
+    # np.save('Y_Predicted4.npy', y_predict)
 
-# y_pred1 = np.load('Y_Predicted50.npy')
-# y_pred2 = np.load('Y_Predicted4.npy')
+    # y_pred1 = np.load('Y_Predicted50.npy')
+    # y_pred2 = np.load('Y_Predicted4.npy')
 
 BACC(y_predict, yval_t)
 
-print(np.shape(ytrain))
-print(np.shape(yval_t))
-print(np.shape(y_predict))
+# print(np.mean(scores))
+# print(np.shape(ytrain))
+# print(np.shape(yval_t))
+# print(np.shape(y_predict))
+
+# KNN RO- 0.7872 SMOTE- 0.76057
+# RF RO- 0.8656 SMOTE- 0.8222

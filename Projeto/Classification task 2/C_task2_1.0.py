@@ -153,13 +153,14 @@ def hyperparameter_tunning(x_training, y_training, Classifiers):
 def best_model(Classifiers, params):
     Scores = []
     scoring = {'score': met.make_scorer(BACC)}
-    classifier = Classifiers[4]
+    classifier = Classifiers[1]
     # for i, classifier in enumerate(Classifiers):
+    # pipeline = imbpipeline(steps = [('classifier', classifier)])
     pipeline = imbpipeline(steps = [('sampling', sampling_method(1,1)),('classifier', classifier)])
         # if i == 0:
         #     classifier_cv = GridSearchCV(pipeline , params[i], scoring=scoring, cv= 4,refit="score", verbose=2)
         # else:
-    classifier_cv = GridSearchCV(pipeline , params[4], scoring=scoring, cv= 4,refit="score", n_jobs=-1, verbose=2)
+    classifier_cv = GridSearchCV(pipeline , params[1], scoring=scoring, cv= 5,refit="score", n_jobs=-1, verbose=2)
         # classifier_cv.fit(Xtrain, ytrain)
     classifier_cv.fit(X, Y)
     Scores.append(classifier_cv.best_score_)
@@ -174,7 +175,9 @@ def prediction(Classifiers_best,Classifiers, params):
     chosen_model = 4 # Because RF yields the best results
     classifier = Classifiers_best[chosen_model]
     X_train, y_train = balance_data(Xtrain, ytrain, 1)
-    X_, Y_ = balance_data(X, Y, 1)
+    # X_, Y_ = balance_data(X, Y, 1)
+    X_, Y_ = balance_data(Xtrain, ytrain, 1)
+    # X_, Y_ = Xtrain, ytrain
     if chosen_model == 0:
         train_labels = tf.keras.utils.to_categorical(y_train, num_classes=3)
         valid_labels = tf.keras.utils.to_categorical(yval, num_classes=3)
@@ -191,7 +194,7 @@ def prediction(Classifiers_best,Classifiers, params):
         y_pred = classifier.predict(X_test)
         y_val_pred = classifier.predict(Xval)
 
-    # BACC(yval, y_val_pred)
+    BACC(yval, y_val_pred)
     return y_pred
 
 ##################################################   Main   ##################################################
@@ -206,7 +209,7 @@ X = X/255
 X_test = X_test/255
 
 # Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.2)
-# Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.15, random_state=2)
+Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.15, random_state=2)
 
 
     
@@ -225,7 +228,7 @@ Classifiers_with_best_params = [MLP(n_layers= 4, first_layer_nodes=128, last_lay
 # y_sum_predictions = 0
 # for i in range(50):
 #     print(i)
-Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.2)
+# Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.2)
 
 # y_predict_aux = prediction(Classifiers_with_best_params, Classifiers, best_params)
 # y_sum_predictions += tf.keras.utils.to_categorical(y_predict_aux, num_classes=3)

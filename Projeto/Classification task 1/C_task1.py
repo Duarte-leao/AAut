@@ -185,7 +185,7 @@ def CNN(Xtrain, train_labels, Xval, valid_labels, model, class_weights = None):
     
     cnn_model.compile(optimizer="adam", loss='categorical_crossentropy', metrics = f1_score)
     
-    my_callbacks = [keras.callbacks.EarlyStopping(monitor = 'val_loss', patience=10, restore_best_weights=True)]
+    my_callbacks = [keras.callbacks.EarlyStopping(monitor = 'val_loss', patience=15, restore_best_weights=True)]
     cnn_train = cnn_model.fit(Xtrain, train_labels,validation_data=(Xval, valid_labels),class_weight=class_weights, epochs= 50,batch_size=200, callbacks= my_callbacks)
 
 
@@ -194,7 +194,7 @@ def CNN(Xtrain, train_labels, Xval, valid_labels, model, class_weights = None):
     # print('Test loss:', test_eval[0])
     # print('Test f1:', test_eval[1])   
 
-    # Plots(cnn_train)
+    Plots(cnn_train)
 
     return cnn_model
 
@@ -248,7 +248,7 @@ def other_methods(Xtrain, ytrain, train_labels, Xval, yval, models, scores):
 
 ########    Preprocessing method to use     #######
 def choose_dataset(model):
-    l = 25
+    l = 150
     a = []
     b = []
     c = []
@@ -263,27 +263,27 @@ def choose_dataset(model):
     for i in range(l):
         print(i)
         if i<l/5: # With data augmentation
-            pass
-            # cnn_model = CNN(data_augment(Xtrain_cnn), train_labels, Xval_cnn, valid_labels,model)
-            # a.append(model_evaluation(cnn_model, Xval_cnn, yval))
-            # a1.append(bacc(cnn_model, Xval_cnn, yval))
+            # pass
+            cnn_model = CNN(data_augment(Xtrain_cnn), train_labels, Xval_cnn, valid_labels,model)
+            a.append(model_evaluation(cnn_model, Xval_cnn, yval))
+            a1.append(bacc(cnn_model, Xval_cnn, yval))
         elif l/5-1<i<2*l/5: # With balanced data
-            pass
-            # aux_X, aux_y = data_balance_generator(Xtrain_cnn, train_labels)
-            # cnn_model = CNN(aux_X, aux_y, Xval_cnn, valid_labels,model)
-            # b.append(model_evaluation(cnn_model, Xval_cnn, yval))
-            # b1.append(bacc(cnn_model, Xval_cnn, yval))
+            # pass
+            aux_X, aux_y = data_balance_generator(Xtrain_cnn, train_labels)
+            cnn_model = CNN(aux_X, aux_y, Xval_cnn, valid_labels,model)
+            b.append(model_evaluation(cnn_model, Xval_cnn, yval))
+            b1.append(bacc(cnn_model, Xval_cnn, yval))
         elif 2*l/5-1<i<3*l/5: # with original data set
-            pass
-            # cnn_model = CNN(Xtrain_cnn, train_labels, Xval_cnn, valid_labels,model)
-            # c.append(model_evaluation(cnn_model, Xval_cnn, yval))
-            # c1.append(bacc(cnn_model, Xval_cnn, yval))
+            # pass
+            cnn_model = CNN(Xtrain_cnn, train_labels, Xval_cnn, valid_labels,model)
+            c.append(model_evaluation(cnn_model, Xval_cnn, yval))
+            c1.append(bacc(cnn_model, Xval_cnn, yval))
         elif 3*l/5-1<i<4*l/5: # With data augmentation and balanced data set
-            pass
-            # aux_X, aux_y = data_balance_generator(Xtrain_cnn, train_labels)
-            # cnn_model = CNN(data_augment(aux_X), aux_y, Xval_cnn, valid_labels,model)
-            # d.append(model_evaluation(cnn_model, Xval_cnn, yval))
-            # d1.append(bacc(cnn_model, Xval_cnn, yval))
+            # pass
+            aux_X, aux_y = data_balance_generator(Xtrain_cnn, train_labels)
+            cnn_model = CNN(data_augment(aux_X), aux_y, Xval_cnn, valid_labels,model)
+            d.append(model_evaluation(cnn_model, Xval_cnn, yval))
+            d1.append(bacc(cnn_model, Xval_cnn, yval))
         elif 4*l/5-1<i<l: # With re-weighting of classes
             cnn_model = CNN(Xtrain_cnn, train_labels, Xval_cnn, valid_labels,model, class_weights= class_weights(ytrain))
             e.append(model_evaluation(cnn_model, Xval_cnn, yval))
@@ -292,10 +292,10 @@ def choose_dataset(model):
 
 
 
-    # print('f1 std:',np.std(a), 'f1 mean:',np.mean(a), 'bacc std:',np.std(a1), 'bacc mean:',np.mean(a1),'max f1:', np.max(a),'min f1:', np.min(a))
-    # print('f1 std:',np.std(b), 'f1 mean:',np.mean(b), 'bacc std:',np.std(b1), 'bacc mean:',np.mean(b1),'max f1:', np.max(b),'min f1:', np.min(b))
-    # print('f1 std:',np.std(c), 'f1 mean:',np.mean(c), 'bacc std:',np.std(c1), 'bacc mean:',np.mean(c1),'max f1:', np.max(c),'min f1:', np.min(c))
-    # print('f1 std:',np.std(d), 'f1 mean:',np.mean(d), 'bacc std:',np.std(d1), 'bacc mean:',np.mean(d1),'max f1:', np.max(d),'min f1:', np.min(d))
+    print('f1 std:',np.std(a), 'f1 mean:',np.mean(a), 'bacc std:',np.std(a1), 'bacc mean:',np.mean(a1),'max f1:', np.max(a),'min f1:', np.min(a))
+    print('f1 std:',np.std(b), 'f1 mean:',np.mean(b), 'bacc std:',np.std(b1), 'bacc mean:',np.mean(b1),'max f1:', np.max(b),'min f1:', np.min(b))
+    print('f1 std:',np.std(c), 'f1 mean:',np.mean(c), 'bacc std:',np.std(c1), 'bacc mean:',np.mean(c1),'max f1:', np.max(c),'min f1:', np.min(c))
+    print('f1 std:',np.std(d), 'f1 mean:',np.mean(d), 'bacc std:',np.std(d1), 'bacc mean:',np.mean(d1),'max f1:', np.max(d),'min f1:', np.min(d))
     print('f1 std:',np.std(e), 'f1 mean:',np.mean(e), 'bacc std:',np.std(e1), 'bacc mean:',np.mean(e1),'max f1:', np.max(e),'min f1:', np.min(e))
 
     # plt.figure()
@@ -324,6 +324,21 @@ def choose_dataset(model):
     # f1 std: 0.00827838193453924 f1 mean: 0.8045154805829963 bacc std: 0.0068608114661904045 bacc mean: 0.8413744761916574 max f1: 0.8196202531645569 min f1: 0.7791563275434243 # original data set
     # f1 std: 0.010274636787714847 f1 mean: 0.8015368364139019 bacc std: 0.008487780318032446 bacc mean: 0.8396714401189126 max f1: 0.8296178343949044 min f1: 0.7846808510638298 # re-weighed data # best results
 
+    ### 30 iterations ###
+
+    # f1 std: 0.007508302846159263 f1 mean: 0.8306620475532308 bacc std: 0.006394927596692175 bacc mean: 0.8616970821309148 max f1: 0.8442105263157895 min f1: 0.8131868131868132 # data augmentation
+    # f1 std: 0.010405802899838579 f1 mean: 0.8284765058890146 bacc std: 0.009200387643840808 bacc mean: 0.8609366039118684 max f1: 0.8518134715025906 min f1: 0.8117913832199545 # balanced data
+    # f1 std: 0.00856334517242131 f1 mean: 0.8274182334577067 bacc std: 0.007544861452551712 bacc mean: 0.8589449406806835 max f1: 0.8417721518987342 min f1: 0.8049886621315192 # original data set
+    # f1 std: 0.00954929450719991 f1 mean: 0.8299736041026401 bacc std: 0.007889232449550813 bacc mean: 0.8621540928038112 max f1: 0.8495762711864409 min f1: 0.8116545265348595 # data augmentation and balanced data set
+    # f1 std: 0.008325136378670762 f1 mean: 0.826220853693954 bacc std: 0.007102912208344387 bacc mean: 0.8589366039118684 max f1: 0.8435814455231931 min f1: 0.8097886540600667 # re-weighed data
+
+    ### 30 iterations ###
+
+    # f1 std: 0.01042932479513175 f1 mean: 0.8306620475532308 bacc std: 0.008598896938537928 bacc mean: 0.8616970821309148 max f1: 0.8442105263157895 min f1: 0.8131868131868132 # data augmentation
+    # f1 std: 0.010405802899838579 f1 mean: 0.8284765058890146 bacc std: 0.009200387643840808 bacc mean: 0.8609366039118684 max f1: 0.8518134715025906 min f1: 0.8117913832199545 # balanced data
+    # f1 std: 0.00856334517242131 f1 mean: 0.8274182334577067 bacc std: 0.007544861452551712 bacc mean: 0.8589449406806835 max f1: 0.8417721518987342 min f1: 0.8049886621315192 # original data set
+    # f1 std: 0.00954929450719991 f1 mean: 0.8299736041026401 bacc std: 0.007889232449550813 bacc mean: 0.8621540928038112 max f1: 0.8495762711864409 min f1: 0.8116545265348595 # data augmentation and balanced data set
+    # f1 std: 0.008325136378670762 f1 mean: 0.829220853693954 bacc std: 0.007102912208344387 bacc mean: 0.8589366039118684 max f1: 0.8435814455231931 min f1: 0.8097886540600667 # re-weighed data
 ##################################################   Main   ##################################################
 
 X = np.load('Xtrain_Classification1.npy')
@@ -335,68 +350,85 @@ X_test = np.load('Xtest_Classification1.npy')
 X = X/255
 X_test = X_test/255
 
-# print(np.shape(X_test))
+# print(np.shape(X))
 
 scores = [0]
 
-while np.max(scores) < 0.81:
-    #Split data
 
-    # Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.15, random_state=2)
-    Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.15, shuffle=True)
+Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.15, shuffle=True)
 
 
 
 
-    #One-hot enconding
-    train_labels = keras.utils.to_categorical(ytrain, num_classes=2)
-    valid_labels = keras.utils.to_categorical(yval, num_classes=2)
+# One-hot enconding
+train_labels = keras.utils.to_categorical(ytrain, num_classes=2)
+valid_labels = keras.utils.to_categorical(yval, num_classes=2)
 
-    #Reshape
-    Xtrain_cnn = Xtrain.reshape(-1, 30, 30, 3)
-    Xval_cnn = Xval.reshape(-1, 30, 30, 3)
- 
-    # choose_dataset(2)
+# Reshape
+Xtrain_cnn = Xtrain.reshape(-1, 30, 30, 3)
+Xval_cnn = Xval.reshape(-1, 30, 30, 3)
 
-    # Auxiliar lists
-    models = []
-    scores = []
-    # CNN model 1
-    models.append(CNN(Xtrain_cnn, train_labels, Xval_cnn, valid_labels,1, class_weights= class_weights(ytrain))) 
-    scores.append(model_evaluation(models[0], Xval_cnn, yval))
+# plt.imshow(Xtrain_cnn[504])
+# plt.show()
+# choose_dataset(2)
 
-    # CNN model 2
-    models.append(CNN(Xtrain_cnn, train_labels, Xval_cnn, valid_labels,2, class_weights= class_weights(ytrain))) 
-    scores.append(model_evaluation(models[1], Xval_cnn, yval))
+# while np.max(scores) < 0.81:
+#     #Split data
 
-    # Other methods
-    models, scores = other_methods(Xtrain, ytrain, train_labels, Xval, yval, models, scores)
-
-    print(np.max(scores))
+#     # Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.15, random_state=2)
+#     Xtrain, Xval, ytrain, yval = train_test_split(X, Y, test_size=0.15, shuffle=True)
 
 
 
-# Choose best Classifier
 
-max_f1 = np.argmax(scores)
+#One-hot enconding
+train_labels = keras.utils.to_categorical(ytrain, num_classes=2)
+valid_labels = keras.utils.to_categorical(yval, num_classes=2)
 
-print(scores)
-print(max_f1)
+#Reshape
+Xtrain_cnn = Xtrain.reshape(-1, 30, 30, 3)
+Xval_cnn = Xval.reshape(-1, 30, 30, 3)
+#     # choose_dataset(2)
 
-classifier = models[max_f1]
+#     # Auxiliar lists
+models = []
+#     scores = []
+# CNN model 1
+models.append(CNN(Xtrain_cnn, train_labels, Xval_cnn, valid_labels,1, class_weights= class_weights(ytrain))) 
+# scores.append(model_evaluation(models[0], Xval_cnn, yval))
 
-if max_f1 < 2:
-    X_test = X_test.reshape(-1, 30, 30, 3)
-    y_predict = classifier.predict(X_test)
-    y_predict = categorical_to_binary(y_predict)
-else:
-    y_predict = classifier.fit(X,Y).predict(X_test)
+# CNN model 2
+models.append(CNN(Xtrain_cnn, train_labels, Xval_cnn, valid_labels,2, class_weights= class_weights(ytrain))) 
+#     scores.append(model_evaluation(models[1], Xval_cnn, yval))
 
-np.save('Y_Predicted3.npy', y_predict)
+#     # Other methods
+#     models, scores = other_methods(Xtrain, ytrain, train_labels, Xval, yval, models, scores)
+
+#     print(np.max(scores))
 
 
 
-print(np.shape(X_test))
-print(np.shape(y_predict))
+# # Choose best Classifier
+
+# max_f1 = np.argmax(scores)
+
+# print(scores)
+# print(max_f1)
+
+# classifier = models[max_f1]
+
+# if max_f1 < 2:
+#     X_test = X_test.reshape(-1, 30, 30, 3)
+#     y_predict = classifier.predict(X_test)
+#     y_predict = categorical_to_binary(y_predict)
+# else:
+#     y_predict = classifier.fit(X,Y).predict(X_test)
+
+# np.save('Y_Predicted3.npy', y_predict)
+
+
+
+# print(np.shape(X_test))
+# print(np.shape(y_predict))
 
 # [0.7910798122065726, 0.8296460176991151, 0.5306495882891127, 0.706405693950178, 0.6130434782608696, 0.6577693040991421, 0.7459252157238734] # scores

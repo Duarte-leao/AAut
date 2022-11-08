@@ -91,7 +91,7 @@ def Robust_regressors(X,Y,Regressions_names,MSE_array,Predictors):
 
     return Regressions_names, Predictors, MSE_array
 
-Regressions_names, Predictors, MSE_array = Robust_regressors(X,Y,Regressions_names,MSE_array,Predictors)
+# Regressions_names, Predictors, MSE_array = Robust_regressors(X,Y,Regressions_names,MSE_array,Predictors)
 
 
 ###################################################### Outlier removal ######################################################
@@ -402,3 +402,4 @@ predictor = Predictors[min_MSE]
 train_predictor = predictor.fit(X, Y)
 y_predict = train_predictor.predict(X_test)
 np.save('Y_Predicted2.npy', y_predict)
+print(np.shape(y_predict))
